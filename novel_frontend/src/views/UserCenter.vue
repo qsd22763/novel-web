@@ -60,6 +60,7 @@
             <div class="info-card">
               <div class="card-header">
                 <h3>基本信息</h3>
+                <el-button type="primary" plain size="small" @click="showEditDialog">编辑资料</el-button>
               </div>
               <el-descriptions :column="2" border class="info-descriptions">
                 <el-descriptions-item label="用户名">
@@ -189,6 +190,24 @@
     <footer class="site-footer">
       <p>墨香书阁 · 让阅读成为一种习惯</p>
     </footer>
+
+    <el-dialog v-model="editDialogVisible" title="编辑个人资料" width="500px">
+      <el-form :model="editForm" label-width="80px">
+        <el-form-item label="头像">
+          <el-input v-model="editForm.avatar" placeholder="输入头像URL" />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="editForm.email" placeholder="输入邮箱" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="editForm.phone" placeholder="输入手机号" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleUpdateProfile">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -203,6 +222,32 @@ const activeTab = ref('profile')
 const userInfo = ref<any>({})
 const favorites = ref<any[]>([])
 const readingHistory = ref<any[]>([])
+const editDialogVisible = ref(false)
+const editForm = ref({
+  avatar: '',
+  email: '',
+  phone: ''
+})
+
+const showEditDialog = () => {
+  editForm.value = {
+    avatar: userInfo.value.avatar || '',
+    email: userInfo.value.email || '',
+    phone: userInfo.value.phone || ''
+  }
+  editDialogVisible.value = true
+}
+
+const handleUpdateProfile = async () => {
+  try {
+    await request.put('/auth/update_profile/', editForm.value)
+    ElMessage.success('更新成功')
+    editDialogVisible.value = false
+    loadUserInfo()
+  } catch (error) {
+    ElMessage.error('更新失败')
+  }
+}
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return ''

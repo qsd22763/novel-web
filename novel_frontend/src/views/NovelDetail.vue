@@ -97,7 +97,7 @@ const toggleFavorite = async () => {
   if (!novel.value) return
   try {
     if (isFavorited.value) {
-      await request.delete(`/favorites/${novel.value.id}/`)
+      await request.delete('/favorites/delete_by_novel/', { params: { novel_id: novel.value.id } })
       isFavorited.value = false
       ElMessage.success('已取消收藏')
     } else {

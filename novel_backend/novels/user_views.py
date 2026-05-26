@@ -53,6 +53,27 @@ class AuthViewSet(viewsets.ViewSet):
             return Response(UserSerializer(request.user).data)
         return Response({'message': '未登录'}, status=status.HTTP_401_UNAUTHORIZED)
 
+    @action(detail=False, methods=['put', 'patch'])
+    def update_profile(self, request):
+        if not request.user.is_authenticated:
+            return Response({'message': '未登录'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        user = request.user
+        data = request.data
+
+        if 'avatar' in data:
+            user.avatar = data['avatar']
+        if 'phone' in data:
+            user.phone = data['phone']
+        if 'email' in data:
+            user.email = data['email']
+
+        user.save()
+        return Response({
+            'message': '更新成功',
+            'user': UserSerializer(user).data
+        })
+
 
 class FavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = FavoriteSerializer
@@ -72,6 +93,16 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         novel_id = request.query_params.get('novel_id')
         is_favorited = Favorite.objects.filter(user=request.user, novel_id=novel_id).exists()
         return Response({'is_favorited': is_favorited})
+
+    @action(detail=False, methods=['delete'])
+    def delete_by_novel(self, request):
+        novel_id = request.query_params.get('novel_id')
+        try:
+            favorite = Favorite.objects.get(user=request.user, novel_id=novel_id)
+            favorite.delete()
+            return Response({'message': '取消收藏成功'})
+        except Favorite.DoesNotExist:
+            return Response({'message': '收藏记录不存在'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ReadingProgressViewSet(viewsets.ModelViewSet):

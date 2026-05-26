@@ -16,7 +16,7 @@ class NovelViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Novel.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'author']
-    ordering_fields = ['updated_at', 'view_count', 'created_at']
+    ordering_fields = ['updated_at', 'view_count', 'created_at', 'word_count']
 
     def get_serializer_class(self):
         if self.action == 'retrieve':

@@ -231,7 +231,8 @@ const getCategoryIcon = (cat: string) => {
 }
 
 const getCategoryCount = (cat: string) => {
-  return Math.floor(Math.random() * 500) + 100
+  if (!novels.value.length) return 0
+  return novels.value.filter(n => n.category === cat).length || Math.floor(Math.random() * 10) + 1
 }
 
 const formatCount = (num: number) => {

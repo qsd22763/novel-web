@@ -15,7 +15,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '这里是斗破苍穹的简介...',
-                'cover': 'https://img.moèlie.com/covers/yx/doupocangqiong.jpg',
+                'cover': 'https://placehold.co/300x400/8B0000/FFFFFF?text=%E6%96%97%E7%A0%B4%E8%8B%8D%E7%A9%B9',
                 'word_count': 500000,
                 'view_count': 1000000,
                 'chapters': [
@@ -32,7 +32,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '这里是完美世界的简介...',
-                'cover': 'https://img.moèlie.com/covers/yx/wanmeishijie.jpg',
+                'cover': 'https://placehold.co/300x400/4B0082/FFFFFF?text=%E5%AE%8C%E7%BE%8E%E4%B8%96%E7%95%8C',
                 'word_count': 800000,
                 'view_count': 800000,
                 'chapters': [
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                 'category': '穿越',
                 'status': 1,
                 'description': '这里是庆余年的简介...',
-                'cover': 'https://img.moèlie.com/covers/yx/qingyunian.jpg',
+                'cover': 'https://placehold.co/300x400/2F4F4F/FFFFFF?text=%E5%BA%86%E5%BA%94%E5%B9%B4',
                 'word_count': 400000,
                 'view_count': 600000,
                 'chapters': [
@@ -61,7 +61,7 @@ class Command(BaseCommand):
                 'category': '仙侠',
                 'status': 1,
                 'description': '这里是凡人修仙传的简介...',
-                'cover': 'https://img.moèlie.com/covers/yx/fanrenxiuxian.jpg',
+                'cover': 'https://placehold.co/300x400/006400/FFFFFF?text=%E5%87%A1%E4%BA%BA%E4%BF%AE%E4%BB%99%E4%BC%A0',
                 'word_count': 700000,
                 'view_count': 700000,
                 'chapters': [
@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 'category': '游戏',
                 'status': 1,
                 'description': '这里是全职高手的简介...',
-                'cover': 'https://img.moèlie.com/covers/yx/quanzhigaoshou.jpg',
+                'cover': 'https://placehold.co/300x400/1E90FF/FFFFFF?text=%E5%85%A8%E8%81%8C%E9%AB%98%E6%89%8B',
                 'word_count': 300000,
                 'view_count': 500000,
                 'chapters': [
@@ -89,7 +89,7 @@ class Command(BaseCommand):
                 'category': '历史',
                 'status': 1,
                 'description': '现代金融人士穿越到古代成为赘婿，看他如何翻手为云覆手为雨。',
-                'cover': 'https://img.moèlie.com/covers/xs/zhuiXu.jpg',
+                'cover': 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E8%B4%AC%E5%A8%9F',
                 'word_count': 600000,
                 'view_count': 550000,
                 'chapters': [
@@ -104,7 +104,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '大千世界，强者如林，且看少年牧尘崛起于大千世界。',
-                'cover': 'https://img.moèlie.com/covers/yx/dazuizhu.jpg',
+                'cover': 'https://placehold.co/300x400/800000/FFFFFF?text=%E5%A4%A7%E4%B8%BB%E5%AE%B0',
                 'word_count': 650000,
                 'view_count': 750000,
                 'chapters': [
@@ -119,7 +119,7 @@ class Command(BaseCommand):
                 'category': '武侠',
                 'status': 1,
                 'description': '江湖是一张珠帘。大人物小人物，是珠子，大故事小故事，是串线。',
-                'cover': 'https://img.moèlie.com/covers/wx/xuezhong.jpg',
+                'cover': 'https://placehold.co/300x400/191970/FFFFFF?text=%E9%9B%AA%E4%B8%AD%E6%82%8D%E5%88%80%E8%A1%8C',
                 'word_count': 500000,
                 'view_count': 650000,
                 'chapters': [
@@ -134,7 +134,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '命里有时终须有，命里无时要强求。这是一个重生者逆天改命的故事。',
-                'cover': 'https://img.moèlie.com/covers/xs/zetianji.jpg',
+                'cover': 'https://placehold.co/300x400/483D8B/FFFFFF?text=%E6%8B%A9%E5%A4%A9%E8%AE%B0',
                 'word_count': 450000,
                 'view_count': 500000,
                 'chapters': [
@@ -149,7 +149,7 @@ class Command(BaseCommand):
                 'category': '仙侠',
                 'status': 1,
                 'description': '顺为凡，逆则仙。逆天改命，我欲成仙。',
-                'cover': 'https://img.moèlie.com/covers/xx/xianni.jpg',
+                'cover': 'https://placehold.co/300x400/228B22/FFFFFF?text=%E4%BB%99%E9%80%86',
                 'word_count': 800000,
                 'view_count': 850000,
                 'chapters': [
@@ -164,7 +164,7 @@ class Command(BaseCommand):
                 'category': '仙侠',
                 'status': 1,
                 'description': '一念成沧海，一念化桑田。一念斩千魔，一念诛万仙。唯我念……永恒。',
-                'cover': 'https://img.moèlie.com/covers/xx/yinianyongheng.jpg',
+                'cover': 'https://placehold.co/300x400/FFD700/333333?text=%E4%B8%80%E5%BF%B5%E6%B0%B8%E6%81%92',
                 'word_count': 700000,
                 'view_count': 780000,
                 'chapters': [
@@ -179,7 +179,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '不再平凡的少年秦羽，踏上修炼之路，星辰变，唯我不灭。',
-                'cover': 'https://img.moèlie.com/covers/yx/xingchenbian.jpg',
+                'cover': 'https://placehold.co/300x400/000080/FFFFFF?text=%E6%98%9F%E8%BE%89%E5%8F%98',
                 'word_count': 600000,
                 'view_count': 720000,
                 'chapters': [
@@ -194,7 +194,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '大小的血睛鬃毛狮，力可拔山的巨熊，鼻息怒吼震八荒的紫晶翼狮王。',
-                'cover': 'https://img.moèlie.com/covers/yx/panlong.jpg',
+                'cover': 'https://placehold.co/300x400/696969/FFFFFF?text=%E7%9B%94%E9%BE%99',
                 'word_count': 550000,
                 'view_count': 680000,
                 'chapters': [
@@ -209,7 +209,7 @@ class Command(BaseCommand):
                 'category': '武侠',
                 'status': 1,
                 'description': '飞刀出，天地惊。小李飞刀之后的故事。',
-                'cover': 'https://img.moèlie.com/covers/wx/feidaozhihou.jpg',
+                'cover': 'https://placehold.co/300x400/DC143C/FFFFFF?text=%E9%A3%9E%E5%88%80%E4%B9%8B%E5%90%8E',
                 'word_count': 400000,
                 'view_count': 450000,
                 'chapters': [
@@ -224,7 +224,7 @@ class Command(BaseCommand):
                 'category': '仙侠',
                 'status': 1,
                 'description': '我若要有，天不可无。我若要无，天不许有。',
-                'cover': 'https://img.moèlie.com/covers/xx/woyufengtian.jpg',
+                'cover': 'https://placehold.co/300x400/FF4500/FFFFFF?text=%E6%88%91%E6%AC%B2%E5%B0%81%E5%A4%A9',
                 'word_count': 750000,
                 'view_count': 820000,
                 'chapters': [
@@ -239,7 +239,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '永夜将至，王者归来。千夜背负着神秘的使命，踏上王者之路。',
-                'cover': 'https://img.moèlie.com/covers/yx/yongyejunshe.jpg',
+                'cover': 'https://placehold.co/300x400/000000/FFFFFF?text=%E6%B0%B8%E5%A4%9C%E5%90%9B%E7%8E%8B',
                 'word_count': 650000,
                 'view_count': 590000,
                 'chapters': [
@@ -254,7 +254,7 @@ class Command(BaseCommand):
                 'category': '都市',
                 'status': 1,
                 'description': '奉师傅之命，下山保护校花，却不想卷入一场场都市漩涡。',
-                'cover': 'https://img.moèlie.com/covers/ds/xiaohua.jpg',
+                'cover': 'https://placehold.co/300x400/FF69B4/FFFFFF?text=%E6%A0%A1%E8%8A%B1%E7%9A%84%E8%B4%AF%E8%BA%AB%E9%AB%98%E6%89%8B',
                 'word_count': 900000,
                 'view_count': 950000,
                 'chapters': [
@@ -269,7 +269,7 @@ class Command(BaseCommand):
                 'category': '玄幻',
                 'status': 1,
                 'description': '远古神魔陵园崩塌，神魔遗体不翼而飞。万年过后，一个少年出现。',
-                'cover': 'https://img.moèlie.com/covers/yx/shenmu.jpg',
+                'cover': 'https://placehold.co/300x400/556B2F/FFFFFF?text=%E7%A5%9E%E5%9D%A0',
                 'word_count': 700000,
                 'view_count': 800000,
                 'chapters': [
@@ -284,7 +284,7 @@ class Command(BaseCommand):
                 'category': '仙侠',
                 'status': 1,
                 'description': '登天路，踏歌行，弹指遮天。九龙拉棺，诠释着星空古路的开启。',
-                'cover': 'https://img.moèlie.com/covers/xx/zheyantian.jpg',
+                'cover': 'https://placehold.co/300x400/8B0000/FFFFFF?text=%E9%81%AE%E5%A4%A9',
                 'word_count': 750000,
                 'view_count': 850000,
                 'chapters': [
@@ -299,13 +299,88 @@ class Command(BaseCommand):
                 'category': '悬疑',
                 'status': 1,
                 'description': '五十年前，长沙土夫子因一件青铜件而引出一段千年古卷。',
-                'cover': 'https://img.moèlie.com/covers/xy/daomubiji.jpg',
+                'cover': 'https://placehold.co/300x400/2F4F4F/FFFFFF?text=%E7%9B%97%E5%9D%90%E7%AC%94%E8%AE%B0',
                 'word_count': 450000,
                 'view_count': 880000,
                 'chapters': [
                     '第一章 青铜鼎',
                     '第二章 七星鲁王',
                     '第三章 血尸',
+                ]
+            },
+            {
+                'title': '鬼吹灯',
+                'author': '南派三叔',
+                'category': '悬疑',
+                'status': 1,
+                'description': '远古的文明，失落的宝藏，神秘莫测的古墓。',
+                'cover': 'https://placehold.co/300x400/333333/FFFFFF?text=%E9%AC%BC%E5%90%B9%E7%81%AF',
+                'word_count': 500000,
+                'view_count': 900000,
+                'chapters': [
+                    '第一章 精绝古城',
+                    '第二章 龙岭迷窟',
+                    '第三章 云南虫谷',
+                ]
+            },
+            {
+                'title': '武动乾坤',
+                'author': '天蚕土豆',
+                'category': '玄幻',
+                'status': 1,
+                'description': '这里没有魔法，没有斗气，只有武术的中华崛起。',
+                'cover': 'https://placehold.co/300x400/CD853F/FFFFFF?text=%E6%AD%A6%E5%8A%A8%E4%B9%BE%E5%9D%A4',
+                'word_count': 600000,
+                'view_count': 720000,
+                'chapters': [
+                    '第一章 林动',
+                    '第二章 祖符',
+                    '第三章 乱魔海',
+                ]
+            },
+            {
+                'title': '元尊',
+                'author': '天蚕土豆',
+                'category': '玄幻',
+                'status': 1,
+                'description': '天蚕土豆新书，讲述少年周元崛起于逆境的故事。',
+                'cover': 'https://placehold.co/300x400/9400D3/FFFFFF?text=%E5%85%83%E5%B0%84',
+                'word_count': 550000,
+                'view_count': 680000,
+                'chapters': [
+                    '第一章 蟒蟒',
+                    '第二章 祖龙山',
+                    '第三章 周元',
+                ]
+            },
+            {
+                'title': '剑来',
+                'author': '烽火戏诸侯',
+                'category': '仙侠',
+                'status': 1,
+                'description': '剑来！一个生长在骊窟的孩子，一肩挑起五座书院。',
+                'cover': 'https://placehold.co/300x400/4682B4/FFFFFF?text=%E5%89%91%E6%9D%A5',
+                'word_count': 800000,
+                'view_count': 850000,
+                'chapters': [
+                    '第一章 齐静春',
+                    '第二章 陈平安',
+                    '第三章 剑气长',
+                ]
+            },
+            {
+                'title': '万古最强宗',
+                'author': '暗点',
+                'category': '玄幻',
+                'status': 1,
+                'description': '这是一个岌岌可危的宗门，却培养出了一堆最强者。',
+                'cover': 'https://placehold.co/300x400/B22222/FFFFFF?text=%E4%B8%87%E5%8F%A4%E6%9C%80%E5%BC%BA%E5%AE%97',
+                'word_count': 500000,
+                'view_count': 620000,
+                'chapters': [
+                    '第一章 危宗',
+                    '第二章 系统',
+                    '第三章 收徒',
                 ]
             },
         ]

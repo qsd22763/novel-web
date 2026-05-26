@@ -87,7 +87,7 @@
                 class="result-item"
                 @click="goToDetail(novel.id)"
               >
-                <img v-lazy="novel.cover || '/placeholder.png'" :alt="novel.title" class="result-cover" />
+                <img v-lazy="novel.cover" :alt="novel.title" class="result-cover" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
                 <div class="result-info">
                   <h3 v-html="highlightKeyword(novel.title)"></h3>
                   <p class="result-author">

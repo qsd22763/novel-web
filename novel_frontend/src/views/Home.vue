@@ -70,7 +70,7 @@
               @click="goToDetail(novel.id)"
             >
               <div class="card-image">
-                <img v-lazy:src="novel.cover || '/placeholder.png'" :alt="novel.title" />
+                <img v-lazy="novel.cover" :alt="novel.title" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
                 <div class="card-overlay">
                   <span class="overlay-cta">阅读详情</span>
                 </div>
@@ -136,7 +136,7 @@
               @click="goToDetail(novel.id)"
             >
               <div class="item-image">
-                <img v-lazy:src="novel.cover || '/placeholder.png'" :alt="novel.title" />
+                <img v-lazy="novel.cover" :alt="novel.title" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
               </div>
               <div class="item-info">
                 <h4>{{ novel.title }}</h4>

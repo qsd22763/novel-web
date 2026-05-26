@@ -3,14 +3,18 @@ import { createApp, type Directive } from 'vue'
 const observerMap = new WeakMap<HTMLElement, IntersectionObserver>()
 
 const lazyLoad: Directive = {
-  mounted(el: HTMLElement, _binding) {
+  mounted(el: HTMLElement, binding) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const img = el as HTMLImageElement
-            if (img.dataset.src) {
-              img.src = img.dataset.src
+            const src = binding.value
+            if (src) {
+              img.src = src
+              img.onerror = () => {
+                img.src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'
+              }
             }
             observer.unobserve(el)
           }
@@ -22,11 +26,7 @@ const lazyLoad: Directive = {
       }
     )
 
-    const img = el as HTMLImageElement
-    if (img.dataset.src) {
-      observer.observe(el)
-    }
-
+    observer.observe(el)
     observerMap.set(el, observer)
   },
   unmounted(el: HTMLElement) {

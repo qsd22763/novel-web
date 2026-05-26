@@ -69,7 +69,7 @@
               <span class="rank-label">{{ index === 0 ? '桂冠' : index === 1 ? '银冠' : '铜冠' }}</span>
             </div>
             <div class="card-image">
-              <img v-lazy:src="novel.cover || '/placeholder.png'" :alt="novel.title" />
+              <img v-lazy="novel.cover" :alt="novel.title" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
               <div class="card-overlay"></div>
             </div>
             <div class="card-info">
@@ -94,7 +94,7 @@
               <span class="rank-number" :class="{ top: index < 3 }">{{ getDisplayRank(index) }}</span>
             </div>
             <div class="item-cover">
-              <img v-lazy:src="novel.cover || '/placeholder.png'" :alt="novel.title" />
+              <img v-lazy="novel.cover" :alt="novel.title" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
             </div>
             <div class="item-info">
               <h4>{{ novel.title }}</h4>

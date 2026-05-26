@@ -116,7 +116,7 @@
               @click="goToDetail(novel.id)"
             >
               <div class="card-image">
-                <img v-lazy:src="novel.cover || '/placeholder.png'" :alt="novel.title" />
+                <img v-lazy="novel.cover" :alt="novel.title" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
                 <div class="card-overlay">
                   <span class="read-btn">开始阅读</span>
                 </div>

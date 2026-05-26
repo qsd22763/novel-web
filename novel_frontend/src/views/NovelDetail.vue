@@ -13,7 +13,7 @@
       <el-main>
         <div class="content-wrapper" v-if="novel">
           <div class="novel-header">
-            <img v-lazy:src="novel.cover || '/placeholder.png'" :alt="novel.title" class="novel-cover" />
+            <img v-lazy="novel.cover" :alt="novel.title" class="novel-cover" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
             <div class="novel-info">
               <h2>{{ novel.title }}</h2>
               <p class="author">作者：{{ novel.author }}</p>

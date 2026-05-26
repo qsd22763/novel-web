@@ -96,9 +96,10 @@
                 <div class="card-glow"></div>
                 <div class="cover-wrapper">
                   <img
-                    v-lazy="fav.novel?.cover || '/placeholder.png'"
+                    v-lazy="fav.novel?.cover"
                     :alt="fav.novel?.title"
                     class="novel-cover"
+                    @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'"
                   />
                   <div class="cover-overlay">
                     <el-button type="primary" size="small" circle>
@@ -150,8 +151,9 @@
                 <div class="item-glow"></div>
                 <div class="history-cover">
                   <img
-                    v-lazy="item.novel?.cover || '/placeholder.png'"
+                    v-lazy="item.novel?.cover"
                     :alt="item.novel?.title"
+                    @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'"
                   />
                 </div>
                 <div class="history-info">

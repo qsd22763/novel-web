@@ -395,6 +395,7 @@
 
 | 提交哈希 | 提交者 | 时间 | 提交信息 |
 |----------|--------|------|----------|
+| 54b5101 | user | 刚刚 | fix: 修复收藏功能/用户编辑/分类排序等问题 |
 | 408168b | user | 11秒前 | fix: 修复封面懒加载及兜底显示问题 |
 | c7e6f4d | user | 20分钟前 | 新增25本免费小说及封面图片 |
 | 4af5ee5 | user | 30分钟前 | 新增15本免费小说数据 + 个人中心UI全面美化 |
@@ -442,6 +443,55 @@
 - [ ] 配置ESLint/Prettier
 - [ ] 实现数据备份脚本
 - [ ] 添加Redis缓存（可选）
+
+---
+
+### 2026年5月28日 傍晚
+
+#### 清单2.md 任务修复完成
+
+**P0 优先级修复：**
+
+| 任务 | 状态 | 修复内容 |
+|------|------|----------|
+| P0-1 封面图修复 | ✅ 已完成 | 懒加载指令修复，@error兜底机制 |
+| P0-2 收藏功能 | ✅ 已完成 | 后端添加delete_by_novel接口，前端NovelDetail.vue和UserCenter.vue更新调用 |
+| P0-3 阅读闭环 | ✅ 已完成 | 阅读页进度保存API正常，UserCenter阅读记录加载正常 |
+| P0-4 用户中心 | ✅ 已完成 | 添加编辑资料对话框，支持头像/邮箱/手机号更新 |
+
+**P1 优先级修复：**
+
+| 任务 | 状态 | 修复内容 |
+|------|------|----------|
+| P1-5 搜索功能 | ✅ 正常 | 搜索API正常，历史记录功能正常 |
+| P1-6 分类排序 | ✅ 已修复 | 后端ordering_fields添加word_count，前端getCategoryCount修复 |
+| P1-7 交互反馈 | ✅ 正常 | hover效果、按钮反馈已存在 |
+| P1-8 排行榜 | ✅ 正常 | 动态加载、tab切换、详情跳转均正常 |
+
+**详细修复：**
+
+1. **后端 user_views.py**
+   - FavoriteViewSet添加`delete_by_novel` action，支持按小说ID删除收藏
+   - AuthViewSet添加`update_profile` action，支持更新用户资料
+
+2. **后端 views.py**
+   - NovelViewSet.ordering_fields添加`word_count`支持字数排序
+
+3. **前端 NovelDetail.vue**
+   - 修复toggleFavorite使用delete_by_novel接口
+
+4. **前端 UserCenter.vue**
+   - 添加编辑资料对话框（el-dialog）
+   - 添加showEditDialog和handleUpdateProfile函数
+   - 修复取消收藏使用正确的API
+
+5. **前端 NovelList.vue**
+   - getCategoryCount函数不再返回随机数
+
+**Git提交：**
+```
+54b5101 - user, just now : fix: 修复收藏功能/用户编辑/分类排序等问题
+```
 
 ---
 

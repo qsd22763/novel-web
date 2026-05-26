@@ -36,85 +36,55 @@ export interface PaginatedResponse<T> {
 
 export const novelApi = {
   list: (params?: { page?: number; page_size?: number; category?: string; ordering?: string }) =>
-    request.get<PaginatedResponse<Novel>>('/novels/', { params }),
+    request.get('/novels/', { params }),
 
   detail: (id: number) =>
-    request.get<Novel>(`/novels/${id}/`),
+    request.get(`/novels/${id}/`),
 
   chapters: (id: number) =>
     request.get(`/novels/${id}/chapters/`),
 
   search: (q: string, page?: number) =>
-    request.get<PaginatedResponse<Novel>>('/novels/search/', { params: { q, page } }),
+    request.get('/novels/search/', { params: { q, page } }),
 
   recommend: (limit?: number) =>
-    request.get<Novel[]>('/novels/recommend/', { params: { limit } }),
+    request.get('/novels/recommend/', { params: { limit } }),
 }
 
 export const chapterApi = {
   detail: (id: number) =>
-    request.get<Chapter>(`/chapters/${id}/`),
-}
-
-interface LoginResponse {
-  token: string
-  user: {
-    id: number
-    username: string
-    email: string
-  }
-}
-
-interface RegisterData {
-  username: string
-  email: string
-  password: string
-  password_confirm: string
+    request.get(`/chapters/${id}/`),
 }
 
 export const authApi = {
   login: (data: { username: string; password: string }) =>
-    request.post<LoginResponse>('/auth/login/', data),
+    request.post('/auth/login/', data),
 
-  register: (data: RegisterData) =>
-    request.post<any>('/auth/register/', data),
+  register: (data: { username: string; email: string; password: string; password_confirm: string }) =>
+    request.post('/auth/register/', data),
 
   getUserInfo: () =>
-    request.get<any>('/auth/user/'),
+    request.get('/auth/user/'),
 
   updateUserInfo: (data: any) =>
-    request.put<any>('/auth/user/', data),
-}
-
-interface FavoriteNovel {
-  id: number
-  novel: Novel
-  created_at: string
+    request.put('/auth/user/', data),
 }
 
 export const favoriteApi = {
   list: () =>
-    request.get<FavoriteNovel[]>('/favorites/'),
+    request.get('/favorites/'),
 
   add: (novelId: number) =>
-    request.post<any>('/favorites/', { novel_id: novelId }),
+    request.post('/favorites/', { novel_id: novelId }),
 
   remove: (novelId: number) =>
-    request.delete<any>(`/favorites/${novelId}/`),
-}
-
-interface ReadingProgress {
-  id: number
-  novel_id: number
-  chapter_id: number
-  position: number
-  updated_at: string
+    request.delete(`/favorites/${novelId}/`),
 }
 
 export const progressApi = {
   get: (novelId: number) =>
-    request.get<ReadingProgress>(`/progress/${novelId}/`),
+    request.get(`/progress/${novelId}/`),
 
   update: (novelId: number, data: { chapter_id: number; position: number }) =>
-    request.put<ReadingProgress>(`/progress/${novelId}/`, data),
+    request.put(`/progress/${novelId}/`, data),
 }

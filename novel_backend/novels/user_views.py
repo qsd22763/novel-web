@@ -5,13 +5,14 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import login, logout
 
-from .models import User, Favorite, ReadingProgress
+from .models import User, Favorite, ReadingProgress, Bookmark
 from .user_serializers import (
     UserSerializer,
     UserRegistrationSerializer,
     LoginSerializer,
     FavoriteSerializer,
-    ReadingProgressSerializer
+    ReadingProgressSerializer,
+    BookmarkSerializer
 )
 
 
@@ -86,7 +87,11 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         novel_id = request.data.get('novel')
         if Favorite.objects.filter(user=request.user, novel_id=novel_id).exists():
             return Response({'message': '已收藏'}, status=status.HTTP_400_BAD_REQUEST)
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=['get'])
     def check(self, request):
@@ -94,9 +99,9 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         is_favorited = Favorite.objects.filter(user=request.user, novel_id=novel_id).exists()
         return Response({'is_favorited': is_favorited})
 
-    @action(detail=False, methods=['delete'])
+    @action(detail=False, methods=['post'])
     def delete_by_novel(self, request):
-        novel_id = request.query_params.get('novel_id')
+        novel_id = request.data.get('novel_id')
         try:
             favorite = Favorite.objects.get(user=request.user, novel_id=novel_id)
             favorite.delete()
@@ -111,6 +116,9 @@ class ReadingProgressViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return ReadingProgress.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['get'])
     def get_progress(self, request):
@@ -136,3 +144,22 @@ class ReadingProgressViewSet(viewsets.ModelViewSet):
             'message': '更新成功',
             'progress': ReadingProgressSerializer(progress).data
         })
+
+
+class BookmarkViewSet(viewsets.ModelViewSet):
+    serializer_class = BookmarkSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Bookmark.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def by_chapter(self, request):
+        chapter_id = request.query_params.get('chapter_id')
+        bookmark = Bookmark.objects.filter(user=request.user, chapter_id=chapter_id).first()
+        if bookmark:
+            return Response(BookmarkSerializer(bookmark).data)
+        return Response({'message': '暂无书签'}, status=status.HTTP_404_NOT_FOUND)

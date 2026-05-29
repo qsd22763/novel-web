@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, Favorite, ReadingProgress
+from .models import User, Favorite, ReadingProgress, Bookmark
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'avatar', 'phone', 'created_at']
+        fields = ['id', 'username', 'email', 'avatar', 'phone', 'is_vip', 'vip_expire_date', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
@@ -46,19 +46,30 @@ class LoginSerializer(serializers.Serializer):
 class FavoriteSerializer(serializers.ModelSerializer):
     novel_title = serializers.CharField(source='novel.title', read_only=True)
     novel_author = serializers.CharField(source='novel.author', read_only=True)
-    novel_cover = serializers.URLField(source='novel.cover', read_only=True)
+    novel_cover = serializers.CharField(source='novel.cover', read_only=True)
 
     class Meta:
         model = Favorite
-        fields = ['id', 'novel', 'novel_title', 'novel_author', 'novel_cover', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'user', 'novel', 'novel_title', 'novel_author', 'novel_cover', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
 
 
 class ReadingProgressSerializer(serializers.ModelSerializer):
     novel_title = serializers.CharField(source='novel.title', read_only=True)
+    novel_cover = serializers.CharField(source='novel.cover', read_only=True)
     chapter_title = serializers.CharField(source='chapter.title', read_only=True)
 
     class Meta:
         model = ReadingProgress
-        fields = ['id', 'novel', 'chapter', 'novel_title', 'chapter_title', 'position', 'updated_at']
-        read_only_fields = ['id', 'updated_at']
+        fields = ['id', 'user', 'novel', 'chapter', 'novel_title', 'novel_cover', 'chapter_title', 'position', 'updated_at']
+        read_only_fields = ['id', 'user', 'updated_at']
+
+
+class BookmarkSerializer(serializers.ModelSerializer):
+    novel_title = serializers.CharField(source='novel.title', read_only=True)
+    chapter_title = serializers.CharField(source='chapter.title', read_only=True)
+
+    class Meta:
+        model = Bookmark
+        fields = ['id', 'user', 'novel', 'chapter', 'novel_title', 'chapter_title', 'note', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']

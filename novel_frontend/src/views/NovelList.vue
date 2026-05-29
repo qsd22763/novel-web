@@ -2,7 +2,7 @@
   <div class="novel-list-page">
     <header class="site-header">
       <div class="header-inner">
-        <h1 class="logo" @click="goHome">墨香书阁</h1>
+        <h1 class="logo" @click="goHome">墨香書閣</h1>
         <nav class="main-nav">
           <router-link to="/">首页</router-link>
           <router-link to="/novels">书库</router-link>
@@ -24,31 +24,40 @@
           </template>
           <template v-else>
             <router-link to="/user" class="user-avatar">
-              <el-icon :size="20"><User /></el-icon>
+              <el-icon :size="18"><User /></el-icon>
             </router-link>
           </template>
         </div>
       </div>
     </header>
 
-    <div class="page-banner">
-      <div class="banner-content">
-        <h2>探索无限故事世界</h2>
-        <p>发现你最喜欢的小说，开启阅读之旅</p>
-      </div>
-      <div class="banner-decoration">
-        <div class="deco-circle circle-1"></div>
-        <div class="deco-circle circle-2"></div>
-        <div class="deco-circle circle-3"></div>
+    <div class="page-head">
+      <div class="page-head-inner">
+        <nav class="breadcrumb" aria-label="breadcrumb">
+          <router-link to="/" class="bc-item">首页</router-link>
+          <span class="bc-sep">›</span>
+          <span class="bc-item bc-current">书库</span>
+          <template v-if="selectedCategory">
+            <span class="bc-sep">›</span>
+            <span class="bc-item bc-current">{{ selectedCategory }}</span>
+          </template>
+        </nav>
+        <h2 class="page-title">
+          <span class="title-deco">〔</span>
+          {{ selectedCategory || '全部藏书' }}
+          <span class="title-deco">〕</span>
+        </h2>
+        <p class="page-subtitle">共收录 <em>{{ totalNovels }}</em> 部作品，静心阅读，品味文字之美</p>
       </div>
     </div>
 
     <main class="main-content">
       <div class="content-layout">
+
         <aside class="sidebar">
           <div class="sidebar-section">
-            <h3 class="section-title">
-              <el-icon><Grid /></el-icon>
+            <h3 class="sidebar-heading">
+              <span class="heading-mark">◆</span>
               分类
             </h3>
             <ul class="category-list">
@@ -56,34 +65,81 @@
                 :class="{ active: !selectedCategory }"
                 @click="selectCategory('')"
               >
-                <span class="category-icon">📚</span>
-                <span class="category-name">全部</span>
-                <span class="category-count">{{ totalNovels }}</span>
+                <span class="cat-icon">📚</span>
+                <span class="cat-name">全部</span>
+                <span class="cat-count">{{ totalNovels }}</span>
               </li>
               <li
                 v-for="cat in categories"
-                :key="cat"
-                :class="{ active: selectedCategory === cat }"
-                @click="selectCategory(cat)"
+                :key="cat.name"
+                :class="{ active: selectedCategory === cat.name }"
+                @click="selectCategory(cat.name)"
               >
-                <span class="category-icon">{{ getCategoryIcon(cat) }}</span>
-                <span class="category-name">{{ cat }}</span>
-                <span class="category-count">{{ getCategoryCount(cat) }}</span>
+                <span class="cat-icon">{{ cat.icon }}</span>
+                <span class="cat-name">{{ cat.name }}</span>
+                <span class="cat-count">{{ cat.count }}</span>
               </li>
             </ul>
           </div>
 
-          <div class="sidebar-section ranking">
-            <h3 class="section-title">
-              <el-icon><Trophy /></el-icon>
+          <div class="sidebar-section">
+            <h3 class="sidebar-heading">
+              <span class="heading-mark">◆</span>
+              筛选
+            </h3>
+            <div class="filter-block">
+              <p class="filter-label">连载状态</p>
+              <div class="status-btns">
+                <button
+                  :class="{ active: filterStatus === '' }"
+                  @click="filterStatus = ''; handleFilterChange()"
+                >全部</button>
+                <button
+                  :class="{ active: filterStatus === '0' }"
+                  @click="filterStatus = '0'; handleFilterChange()"
+                >连载中</button>
+                <button
+                  :class="{ active: filterStatus === '1' }"
+                  @click="filterStatus = '1'; handleFilterChange()"
+                >已完结</button>
+              </div>
+            </div>
+            <div class="filter-block">
+              <p class="filter-label">字数范围</p>
+              <el-select
+                v-model="filterWordCount"
+                size="small"
+                placeholder="选择字数"
+                class="word-select"
+                @change="handleFilterChange"
+              >
+                <el-option label="全部" value="" />
+                <el-option label="30万以下" value="0-300000" />
+                <el-option label="30 - 50万" value="300000-500000" />
+                <el-option label="50 - 100万" value="500000-1000000" />
+                <el-option label="100 - 200万" value="1000000-2000000" />
+                <el-option label="200万以上" value="2000000-" />
+              </el-select>
+            </div>
+          </div>
+
+          <div class="sidebar-section ranking-section">
+            <h3 class="sidebar-heading">
+              <span class="heading-mark">◆</span>
               人气榜单
             </h3>
             <ol class="ranking-list">
-              <li v-for="(novel, index) in topNovels" :key="novel.id" @click="goToDetail(novel.id)">
-                <span class="rank-num" :class="{ top: index < 3 }">{{ index + 1 }}</span>
+              <li
+                v-for="(novel, index) in topNovels"
+                :key="novel.id"
+                @click="goToDetail(novel.id)"
+              >
+                <span class="rank-num" :class="{ gold: index === 0, silver: index === 1, bronze: index === 2 }">
+                  {{ index + 1 }}
+                </span>
                 <div class="rank-info">
                   <span class="rank-title">{{ novel.title }}</span>
-                  <span class="rank-views">{{ formatCount(novel.view_count) }}阅读</span>
+                  <span class="rank-views">{{ formatCount(novel.view_count) }} 阅读</span>
                 </div>
               </li>
             </ol>
@@ -91,82 +147,89 @@
         </aside>
 
         <section class="novels-section">
-          <div class="section-header">
-            <div class="results-info">
-              <h2 v-if="selectedCategory">{{ selectedCategory }}</h2>
-              <h2 v-else>全部作品</h2>
-              <span class="novel-count">共 {{ totalNovels }} 部小说</span>
+          <div class="novels-toolbar">
+            <div class="toolbar-left">
+              <span class="result-label">
+                {{ selectedCategory ? selectedCategory : '全部作品' }}
+              </span>
+              <span class="result-count">· {{ totalNovels }} 部</span>
             </div>
-            <div class="sort-options">
+            <div class="toolbar-right">
               <span class="sort-label">排序：</span>
-              <el-select v-model="sortBy" size="small" @change="handleSort">
+              <el-select v-model="sortBy" size="small" class="sort-select" @change="handleSort">
                 <el-option label="默认排序" value="default" />
                 <el-option label="更新时间" value="updated" />
                 <el-option label="人气最高" value="views" />
                 <el-option label="字数最多" value="words" />
+                <el-option label="收藏最多" value="recommend" />
               </el-select>
             </div>
           </div>
 
-          <div class="novel-grid" v-if="novels.length > 0">
+          <div class="novel-grid" v-if="!loading && novels.length > 0">
             <article
               v-for="novel in novels"
               :key="novel.id"
               class="novel-card"
               @click="goToDetail(novel.id)"
             >
-              <div class="card-image">
-                <img v-lazy="novel.cover" :alt="novel.title" @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'" />
-                <div class="card-overlay">
+              <div class="card-cover">
+                <img
+                  v-lazy="novel.cover"
+                  :alt="novel.title"
+                  @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x420/D4C5A9/6B5344?text=%E5%B0%81%E9%9D%A2'"
+                />
+                <div class="cover-overlay">
                   <span class="read-btn">开始阅读</span>
                 </div>
-                <span class="category-tag">{{ novel.category }}</span>
+                <span class="status-badge" :class="{ finished: novel.status === 1 }">
+                  {{ novel.status === 1 ? '完结' : '连载' }}
+                </span>
               </div>
-              <div class="card-content">
-                <h3 class="novel-title">{{ novel.title }}</h3>
-                <p class="novel-author">
+              <div class="card-body">
+                <h3 class="card-title">{{ novel.title }}</h3>
+                <p class="card-author">
                   <el-icon><User /></el-icon>
                   {{ novel.author }}
                 </p>
-                <p class="novel-desc">{{ novel.description || '暂无简介' }}</p>
-                <div class="novel-meta">
-                  <span class="meta-item">
+                <div class="card-tags">
+                  <span class="tag-cat">{{ novel.category }}</span>
+                  <span class="tag-words">{{ formatWordCount(novel.word_count) }}</span>
+                </div>
+                <p class="card-desc">{{ novel.description || '暂无简介' }}</p>
+                <div class="card-meta">
+                  <span class="meta-view">
                     <el-icon><View /></el-icon>
                     {{ formatCount(novel.view_count) }}
                   </span>
-                  <span class="meta-item">
-                    <el-icon><Document /></el-icon>
-                    {{ formatWordCount(novel.word_count) }}
-                  </span>
+                  <span class="meta-time">{{ formatDate(novel.updated_at) }}</span>
                 </div>
               </div>
             </article>
           </div>
 
-          <div class="loading-state" v-else-if="loading">
-            <div class="skeleton-grid">
-              <div class="skeleton-card" v-for="i in 8" :key="i">
-                <div class="skeleton-image"></div>
-                <div class="skeleton-content">
-                  <div class="skeleton-title"></div>
-                  <div class="skeleton-author"></div>
-                  <div class="skeleton-desc"></div>
-                </div>
+          <div class="skeleton-grid" v-else-if="loading">
+            <div class="skeleton-card" v-for="i in 12" :key="i">
+              <div class="sk-cover"></div>
+              <div class="sk-body">
+                <div class="sk-line sk-title"></div>
+                <div class="sk-line sk-author"></div>
+                <div class="sk-line sk-desc"></div>
+                <div class="sk-line sk-desc short"></div>
               </div>
             </div>
           </div>
 
           <div class="empty-state" v-else>
-            <div class="empty-illustration">
-              <div class="book-stack">
-                <div class="book b1"></div>
-                <div class="book b2"></div>
-              </div>
+            <div class="empty-books">
+              <div class="book-spine sp1"></div>
+              <div class="book-spine sp2"></div>
+              <div class="book-spine sp3"></div>
             </div>
-            <p>暂无相关小说</p>
+            <p class="empty-text">此处空空如也，换个分类试试</p>
           </div>
 
-          <div class="pagination-wrapper" v-if="totalPages > 1">
+          <div class="pagination-bar" v-if="totalPages > 1">
             <el-pagination
               v-model:current-page="currentPage"
               :page-size="pageSize"
@@ -176,22 +239,24 @@
             />
           </div>
         </section>
+
       </div>
     </main>
 
     <footer class="site-footer">
-      <div class="footer-content">
+      <div class="footer-inner">
         <div class="footer-brand">
-          <h3>墨香书阁</h3>
-          <p>为阅读而生，为故事而活</p>
+          <span class="footer-logo">墨香書閣</span>
+          <p>為閱讀而生，為故事而活</p>
         </div>
+        <div class="footer-divider"></div>
         <div class="footer-links">
           <a href="#">关于我们</a>
           <a href="#">联系方式</a>
           <a href="#">用户协议</a>
           <a href="#">隐私政策</a>
         </div>
-        <p class="copyright">© 2026 墨香书阁. All rights reserved.</p>
+        <p class="copyright">© 2026 墨香書閣 · All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -200,7 +265,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Search, User, Grid, Trophy, View, Document } from '@element-plus/icons-vue'
+import { Search, User, Grid, Trophy, View, Document, Filter } from '@element-plus/icons-vue'
 import { novelApi, type Novel } from '../api'
 
 const router = useRouter()
@@ -215,25 +280,29 @@ const totalNovels = ref(0)
 const selectedCategory = ref('')
 const sortBy = ref('default')
 const searchKeyword = ref('')
+const filterStatus = ref('')
+const filterWordCount = ref('')
 
 const isLoggedIn = computed(() => !!localStorage.getItem('user'))
 
-const categories = ['玄幻', '都市', '穿越', '科幻', '游戏', '悬疑', '武侠', '历史']
+interface Category {
+  name: string
+  icon: string
+  count: number
+}
+
+const categories = ref<Category[]>([
+  { name: '玄幻', icon: '🐉', count: 0 },
+  { name: '都市', icon: '🌆', count: 0 },
+  { name: '穿越', icon: '⏳', count: 0 },
+  { name: '科幻', icon: '🚀', count: 0 },
+  { name: '游戏', icon: '🎮', count: 0 },
+  { name: '悬疑', icon: '🔮', count: 0 },
+  { name: '武侠', icon: '⚔️', count: 0 },
+  { name: '历史', icon: '📜', count: 0 },
+])
 
 const totalPages = computed(() => Math.ceil(totalNovels.value / pageSize.value))
-
-const getCategoryIcon = (cat: string) => {
-  const icons: Record<string, string> = {
-    '玄幻': '🐉', '都市': '🌆', '穿越': '⏳', '科幻': '🚀',
-    '游戏': '🎮', '悬疑': '🔮', '武侠': '⚔️', '历史': '📜'
-  }
-  return icons[cat] || '📖'
-}
-
-const getCategoryCount = (cat: string) => {
-  if (!novels.value.length) return 0
-  return novels.value.filter(n => n.category === cat).length || Math.floor(Math.random() * 10) + 1
-}
 
 const formatCount = (num: number) => {
   if (num >= 10000) return (num / 10000).toFixed(1) + '万'
@@ -245,8 +314,22 @@ const formatWordCount = (num: number) => {
   return num + '字'
 }
 
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  if (days === 0) return '今日'
+  if (days === 1) return '昨日'
+  if (days < 7) return days + '天前'
+  if (days < 30) return Math.floor(days / 7) + '周前'
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+}
+
 const loadNovels = async () => {
   loading.value = true
+  novels.value = []
   try {
     const params: any = {
       page: currentPage.value,
@@ -255,12 +338,22 @@ const loadNovels = async () => {
     if (selectedCategory.value) {
       params.category = selectedCategory.value
     }
+    if (filterStatus.value !== '') {
+      params.status = filterStatus.value
+    }
+    if (filterWordCount.value) {
+      const [min, max] = filterWordCount.value.split('-')
+      if (min) params.word_count_min = min
+      if (max) params.word_count_max = max
+    }
     if (sortBy.value === 'views') {
       params.ordering = '-view_count'
     } else if (sortBy.value === 'words') {
       params.ordering = '-word_count'
     } else if (sortBy.value === 'updated') {
       params.ordering = '-updated_at'
+    } else if (sortBy.value === 'recommend') {
+      params.ordering = '-view_count'
     }
 
     const res = await novelApi.list(params)
@@ -273,10 +366,27 @@ const loadNovels = async () => {
   }
 }
 
+const loadCategoryStats = async () => {
+  try {
+    const res: any = await novelApi.category_stats()
+    categories.value = categories.value.map(cat => ({
+      ...cat,
+      count: res[cat.name] || 0
+    }))
+  } catch (error) {
+    console.error('加载分类统计失败:', error)
+  }
+}
+
+const handleFilterChange = () => {
+  currentPage.value = 1
+  loadNovels()
+}
+
 const loadTopNovels = async () => {
   try {
-    const res = await novelApi.recommend(5)
-    topNovels.value = res.slice(0, 5)
+    const res = await novelApi.list({ page_size: 5, ordering: '-view_count' })
+    topNovels.value = (res.results || []).slice(0, 5)
   } catch (error) {
     console.error('加载榜单失败:', error)
   }
@@ -320,6 +430,7 @@ onMounted(() => {
   }
   loadNovels()
   loadTopNovels()
+  loadCategoryStats()
 })
 
 watch(() => route.query.category, (newCat) => {
@@ -329,69 +440,84 @@ watch(() => route.query.category, (newCat) => {
 </script>
 
 <style scoped>
-.novel-list-page {
-  min-height: 100vh;
-  background: #faf8f5;
+@import url('https://fonts.loli.net/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+:root {
+  --paper-bg: #FDFBF7;
+  --ink: #1A1A1A;
+  --muted: #6B7280;
+  --accent: #CA8A04;
+  --accent-light: #FEF3C7;
+  --border: #E0E0E0;
+  --card-bg: #FFFFFF;
+  --sidebar-bg: #FAF8F4;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+.novel-list-page {
+  min-height: 100vh;
+  background: var(--paper-bg);
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft YaHei', sans-serif;
+  color: var(--ink);
+}
+
+/* ========== HEADER ========== */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(250, 248, 245, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(253, 251, 247, 0.97);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
 }
 
 .header-inner {
-  max-width: 1400px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 1rem 2rem;
+  padding: 0 2rem;
+  height: 60px;
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
 .logo {
-  font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 1.5rem;
+  font-family: 'Noto Serif TC', 'STSong', serif;
+  font-size: 1.4rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--ink);
   margin: 0;
   cursor: pointer;
   white-space: nowrap;
+  letter-spacing: 0.05em;
 }
 
 .main-nav {
   display: flex;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .main-nav a {
-  color: #666;
+  font-size: 0.88rem;
+  color: var(--muted);
   text-decoration: none;
-  font-size: 0.95rem;
-  transition: color 0.2s;
-  position: relative;
+  letter-spacing: 0.03em;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
 }
 
 .main-nav a:hover {
-  color: #1a1a1a;
+  color: var(--ink);
 }
 
 .main-nav a.router-link-active {
-  color: #1a1a1a;
+  color: var(--ink);
+  border-bottom-color: var(--accent);
   font-weight: 500;
-}
-
-.main-nav a.router-link-active::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #1a1a1a;
 }
 
 .header-actions {
@@ -402,213 +528,314 @@ watch(() => route.query.category, (newCat) => {
 }
 
 .search-input {
-  width: 200px;
+  width: 210px;
 }
 
 .search-input :deep(.el-input__wrapper) {
-  background: #f5f3f0;
-  box-shadow: none;
+  background: #F5F2EC;
+  box-shadow: none !important;
   border: 1px solid transparent;
-  transition: all 0.3s;
+  border-radius: 6px;
+  transition: all 0.25s;
 }
 
 .search-input :deep(.el-input__wrapper:hover),
 .search-input :deep(.el-input__wrapper.is-focus) {
-  border-color: #1a1a1a;
-  background: #fff;
+  border-color: var(--accent);
+  background: var(--card-bg);
 }
 
 .auth-link {
-  color: #666;
+  font-size: 0.88rem;
+  color: var(--muted);
   text-decoration: none;
-  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.auth-link:hover {
+  color: var(--accent);
 }
 
 .user-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: #f5f3f0;
+  width: 34px;
+  height: 34px;
+  background: #F5F2EC;
   border-radius: 50%;
-  color: #666;
+  color: var(--muted);
+  border: 1px solid var(--border);
   transition: all 0.2s;
 }
 
 .user-avatar:hover {
-  background: #1a1a1a;
-  color: #fff;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.page-banner {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-  padding: 4rem 2rem;
-  position: relative;
-  overflow: hidden;
+/* ========== PAGE HEAD ========== */
+.page-head {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 2rem 0 1.75rem;
 }
 
-.banner-content {
-  max-width: 1400px;
+.page-head-inner {
+  max-width: 1360px;
   margin: 0 auto;
-  position: relative;
-  z-index: 1;
+  padding: 0 2rem;
 }
 
-.banner-content h2 {
-  font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 2.5rem;
-  color: #fff;
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.bc-item {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a.bc-item:hover {
+  color: var(--accent);
+}
+
+.bc-current {
+  color: var(--ink);
+}
+
+.bc-sep {
+  font-size: 0.75rem;
+  color: var(--border);
+}
+
+.page-title {
+  font-family: 'Noto Serif TC', 'STSong', serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ink);
   margin: 0 0 0.5rem;
+  letter-spacing: 0.06em;
 }
 
-.banner-content p {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.6);
+.title-deco {
+  color: var(--accent);
+  font-size: 1.5rem;
+  margin: 0 0.25rem;
+}
+
+.page-subtitle {
+  font-size: 0.88rem;
+  color: var(--muted);
   margin: 0;
 }
 
-.banner-decoration {
-  position: absolute;
-  top: 0;
-  right: 10%;
-  bottom: 0;
-  width: 400px;
+.page-subtitle em {
+  font-style: normal;
+  color: var(--accent);
+  font-weight: 600;
 }
 
-.deco-circle {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.1;
-}
-
-.circle-1 {
-  width: 300px;
-  height: 300px;
-  background: #fff;
-  top: -100px;
-  right: 0;
-}
-
-.circle-2 {
-  width: 200px;
-  height: 200px;
-  background: #fff;
-  top: 50px;
-  right: 150px;
-}
-
-.circle-3 {
-  width: 150px;
-  height: 150px;
-  background: #fff;
-  bottom: -50px;
-  right: 50px;
-}
-
+/* ========== MAIN LAYOUT ========== */
 .main-content {
-  max-width: 1400px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 2rem 3rem;
 }
 
 .content-layout {
   display: flex;
   gap: 2rem;
+  align-items: flex-start;
 }
 
+/* ========== SIDEBAR ========== */
 .sidebar {
-  width: 280px;
+  width: 248px;
   flex-shrink: 0;
+  position: sticky;
+  top: 76px;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .sidebar-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.25rem;
 }
 
-.section-title {
+.sidebar-heading {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0 0 1rem;
-  color: #1a1a1a;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #eee;
+  letter-spacing: 0.08em;
+}
+
+.heading-mark {
+  color: var(--accent);
+  font-size: 0.6rem;
 }
 
 .category-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .category-list li {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 8px;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 4px;
   cursor: pointer;
+  border: 1px solid transparent;
   transition: all 0.2s;
 }
 
 .category-list li:hover {
-  background: #f9f9f9;
+  background: var(--accent-light);
+  border-color: #FDE68A;
 }
 
 .category-list li.active {
-  background: #1a1a1a;
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+.category-list li.active .cat-name {
+  color: #92400E;
+  font-weight: 600;
+}
+
+.category-list li.active .cat-count {
+  background: var(--accent);
   color: #fff;
 }
 
-.category-list li.active .category-count {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+.cat-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
-.category-icon {
-  font-size: 1.1rem;
-}
-
-.category-name {
+.cat-name {
   flex: 1;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  color: var(--ink);
 }
 
-.category-count {
-  font-size: 0.75rem;
-  color: #888;
-  background: #f0f0f0;
-  padding: 2px 8px;
+.cat-count {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: #F3F0EB;
+  padding: 2px 7px;
   border-radius: 10px;
+  min-width: 28px;
+  text-align: center;
 }
 
-.ranking {
-  flex: 1;
+.filter-block {
+  margin-bottom: 1rem;
 }
+
+.filter-block:last-child {
+  margin-bottom: 0;
+}
+
+.filter-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.04em;
+}
+
+.status-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.status-btns button {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 0.78rem;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-btns button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.status-btns button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.word-select {
+  width: 100%;
+}
+
+.word-select :deep(.el-select__wrapper) {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px;
+  background: var(--card-bg);
+  font-size: 0.8rem;
+}
+
+.word-select :deep(.el-select__wrapper:hover) {
+  border-color: var(--accent) !important;
+}
+
+.ranking-section {}
 
 .ranking-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .ranking-list li {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0;
+  padding: 0.6rem 0;
   cursor: pointer;
+  border-bottom: 1px dashed #F0ECE4;
   transition: opacity 0.2s;
+}
+
+.ranking-list li:last-child {
+  border-bottom: none;
 }
 
 .ranking-list li:hover {
@@ -619,17 +846,28 @@ watch(() => route.query.category, (newCat) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #888;
-  background: #f0f0f0;
-  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: #F3F0EB;
+  color: var(--muted);
 }
 
-.rank-num.top {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+.rank-num.gold {
+  background: var(--accent);
+  color: #fff;
+}
+
+.rank-num.silver {
+  background: #9CA3AF;
+  color: #fff;
+}
+
+.rank-num.bronze {
+  background: #B45309;
   color: #fff;
 }
 
@@ -637,400 +875,540 @@ watch(() => route.query.category, (newCat) => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
 .rank-title {
-  font-size: 0.85rem;
-  color: #333;
+  font-size: 0.82rem;
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rank-views {
-  font-size: 0.75rem;
-  color: #aaa;
+  font-size: 0.7rem;
+  color: var(--muted);
 }
 
+/* ========== NOVELS SECTION ========== */
 .novels-section {
   flex: 1;
   min-width: 0;
 }
 
-.section-header {
+.novels-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   margin-bottom: 1.5rem;
 }
 
-.results-info h2 {
-  font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 1.5rem;
-  margin: 0 0 0.25rem;
-  color: #1a1a1a;
+.toolbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
 }
 
-.novel-count {
-  font-size: 0.85rem;
-  color: #888;
+.result-label {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
 }
 
-.sort-options {
+.result-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.toolbar-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .sort-label {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
-.sort-options :deep(.el-select) {
-  width: 120px;
+.sort-select {
+  width: 110px;
 }
 
+.sort-select :deep(.el-select__wrapper) {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+
+.sort-select :deep(.el-select__wrapper:hover) {
+  border-color: var(--accent) !important;
+}
+
+/* ========== NOVEL GRID ========== */
 .novel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 1.5rem;
 }
 
 .novel-card {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
+  transition: box-shadow 0.28s ease, border-color 0.28s ease, transform 0.28s ease;
 }
 
 .novel-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
-  border-color: #1a1a1a;
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px rgba(202, 138, 4, 0.12), 0 2px 8px rgba(0,0,0,0.08);
+  transform: translateY(-4px);
 }
 
-.card-image {
+.card-cover {
   position: relative;
-  height: 260px;
+  width: 100%;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
+  background: #E8E2D8;
 }
 
-.card-image img {
+.card-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s;
+  display: block;
+  transition: transform 0.32s ease;
 }
 
-.novel-card:hover .card-image img {
-  transform: scale(1.08);
+.novel-card:hover .card-cover img {
+  transform: scale(1.06);
 }
 
-.card-overlay {
+.cover-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(26, 26, 26, 0.52);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.28s;
 }
 
-.novel-card:hover .card-overlay {
+.novel-card:hover .cover-overlay {
   opacity: 1;
 }
 
 .read-btn {
-  padding: 0.6rem 1.5rem;
-  background: #fff;
-  color: #1a1a1a;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 24px;
-  transform: translateY(10px);
-  transition: transform 0.3s;
+  padding: 7px 18px;
+  background: var(--card-bg);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 2px;
+  letter-spacing: 0.06em;
+  transform: translateY(8px);
+  transition: transform 0.28s;
 }
 
 .novel-card:hover .read-btn {
   transform: translateY(0);
 }
 
-.category-tag {
+.status-badge {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 4px 12px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 0.75rem;
-  border-radius: 4px;
-}
-
-.card-content {
-  padding: 1.25rem;
-}
-
-.novel-title {
-  font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 1rem;
+  bottom: 8px;
+  right: 8px;
+  padding: 3px 8px;
+  font-size: 0.65rem;
   font-weight: 600;
-  margin: 0 0 0.5rem;
-  color: #1a1a1a;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+  background: rgba(59, 130, 246, 0.85);
+  color: #fff;
+  backdrop-filter: blur(4px);
+}
+
+.status-badge.finished {
+  background: rgba(202, 138, 4, 0.9);
+}
+
+.card-body {
+  padding: 0.875rem;
+}
+
+.card-title {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 0.35rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.03em;
 }
 
-.novel-author {
+.card-author {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  color: #888;
-  margin: 0 0 0.75rem;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
 }
 
-.novel-desc {
-  font-size: 0.8rem;
-  color: #666;
-  line-height: 1.5;
-  margin: 0 0 1rem;
+.card-tags {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag-cat,
+.tag-words {
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  border-radius: 2px;
+  letter-spacing: 0.03em;
+}
+
+.tag-cat {
+  background: var(--accent-light);
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.tag-words {
+  background: #F3F0EB;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.card-desc {
+  font-size: 0.75rem;
+  color: #9CA3AF;
+  line-height: 1.55;
+  margin: 0 0 0.6rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.novel-meta {
+.card-meta {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid #F3F0EB;
 }
 
-.meta-item {
+.meta-view {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: #aaa;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: var(--muted);
 }
 
-.loading-state {
-  min-height: 400px;
+.meta-time {
+  font-size: 0.68rem;
+  color: #D1C9BC;
 }
 
+/* ========== SKELETON ========== */
 .skeleton-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 1.5rem;
 }
 
 .skeleton-card {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   overflow: hidden;
 }
 
-.skeleton-image {
-  height: 260px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeleton-content {
-  padding: 1.25rem;
-}
-
-.skeleton-title {
-  height: 20px;
-  width: 80%;
-  background: #f0f0f0;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-}
-
-.skeleton-author {
-  height: 14px;
-  width: 50%;
-  background: #f0f0f0;
-  border-radius: 4px;
-  margin-bottom: 0.75rem;
-}
-
-.skeleton-desc {
-  height: 14px;
+.sk-cover {
   width: 100%;
-  background: #f0f0f0;
-  border-radius: 4px;
+  aspect-ratio: 3 / 4;
+  background: linear-gradient(90deg, #F3F0EB 25%, #EDE8E0 50%, #F3F0EB 75%);
+  background-size: 300% 100%;
+  animation: sk-shimmer 1.6s infinite;
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+.sk-body {
+  padding: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
+.sk-line {
+  height: 12px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #F3F0EB 25%, #EDE8E0 50%, #F3F0EB 75%);
+  background-size: 300% 100%;
+  animation: sk-shimmer 1.6s infinite;
+}
+
+.sk-title {
+  height: 15px;
+  width: 75%;
+}
+
+.sk-author {
+  width: 50%;
+}
+
+.sk-desc {
+  width: 100%;
+}
+
+.sk-desc.short {
+  width: 65%;
+}
+
+@keyframes sk-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ========== EMPTY STATE ========== */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  background: #fff;
-  border-radius: 16px;
-}
-
-.empty-illustration {
-  width: 120px;
-  height: 100px;
-  margin-bottom: 1.5rem;
-}
-
-.book-stack {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.book {
-  position: absolute;
+  min-height: 360px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
   border-radius: 4px;
 }
 
-.b1 {
-  width: 50px;
-  height: 70px;
-  background: linear-gradient(135deg, #e8d5b7 0%, #d4c4a8 100%);
-  top: 10px;
-  left: 10px;
-  transform: rotate(-5deg);
+.empty-books {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-bottom: 1.5rem;
 }
 
-.b2 {
-  width: 50px;
-  height: 70px;
-  background: linear-gradient(135deg, #8b7355 0%, #6b5344 100%);
-  top: 0;
-  left: 50px;
-  transform: rotate(3deg);
+.book-spine {
+  border-radius: 3px 0 0 3px;
 }
 
-.empty-state p {
-  font-size: 0.95rem;
-  color: #888;
+.sp1 {
+  width: 28px;
+  height: 80px;
+  background: linear-gradient(180deg, #D4C5A9 0%, #B8A88A 100%);
+}
+
+.sp2 {
+  width: 32px;
+  height: 100px;
+  background: linear-gradient(180deg, #8B7355 0%, #6B5344 100%);
+}
+
+.sp3 {
+  width: 24px;
+  height: 64px;
+  background: linear-gradient(180deg, #C9AE80 0%, #A8906A 100%);
+}
+
+.empty-text {
+  font-size: 0.9rem;
+  color: var(--muted);
   margin: 0;
+  letter-spacing: 0.04em;
 }
 
-.pagination-wrapper {
+/* ========== PAGINATION ========== */
+.pagination-bar {
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
+  margin-top: 2.5rem;
 }
 
-.pagination-wrapper :deep(.el-pager li) {
-  border-radius: 8px;
-  margin: 0 2px;
+.pagination-bar :deep(.el-pagination) {
+  gap: 4px;
 }
 
-.pagination-wrapper :deep(.el-pager li.is-active) {
-  background: #1a1a1a;
+.pagination-bar :deep(.el-pager li) {
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--ink);
+  font-size: 0.85rem;
+  min-width: 34px;
+  height: 34px;
+  line-height: 32px;
+  transition: all 0.2s;
 }
 
-.site-footer {
-  background: #1a1a1a;
+.pagination-bar :deep(.el-pager li:hover) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pagination-bar :deep(.el-pager li.is-active) {
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
-  padding: 4rem 2rem;
+  font-weight: 700;
+}
+
+.pagination-bar :deep(.btn-prev),
+.pagination-bar :deep(.btn-next) {
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  height: 34px;
+  width: 34px;
+  transition: all 0.2s;
+}
+
+.pagination-bar :deep(.btn-prev:hover),
+.pagination-bar :deep(.btn-next:hover) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ========== FOOTER ========== */
+.site-footer {
+  background: #1C1A17;
+  padding: 3rem 2rem 2rem;
   margin-top: 4rem;
 }
 
-.footer-content {
-  max-width: 1400px;
+.footer-inner {
+  max-width: 1360px;
   margin: 0 auto;
   text-align: center;
 }
 
-.footer-brand h3 {
-  font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 1.5rem;
-  margin: 0 0 0.5rem;
+.footer-brand {
+  margin-bottom: 1.5rem;
+}
+
+.footer-logo {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #F5F0E8;
+  letter-spacing: 0.08em;
 }
 
 .footer-brand p {
-  color: #888;
-  margin: 0 0 2rem;
+  font-size: 0.82rem;
+  color: #6B6560;
+  margin: 0.4rem 0 0;
+  letter-spacing: 0.06em;
+}
+
+.footer-divider {
+  width: 60px;
+  height: 1px;
+  background: #3A3530;
+  margin: 0 auto 1.5rem;
 }
 
 .footer-links {
   display: flex;
   justify-content: center;
   gap: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .footer-links a {
-  color: #888;
+  font-size: 0.82rem;
+  color: #6B6560;
   text-decoration: none;
-  font-size: 0.9rem;
   transition: color 0.2s;
 }
 
 .footer-links a:hover {
-  color: #fff;
+  color: var(--accent);
 }
 
 .copyright {
-  color: #555;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
+  color: #4A4540;
   margin: 0;
+  letter-spacing: 0.04em;
 }
 
-@media (max-width: 1024px) {
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1100px) {
   .content-layout {
     flex-direction: column;
   }
 
   .sidebar {
     width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
 
-  .sidebar-section {
-    min-width: 280px;
+  .ranking-section {
+    grid-column: span 2;
   }
 }
 
 @media (max-width: 768px) {
   .header-inner {
-    flex-wrap: wrap;
+    padding: 0 1rem;
     gap: 1rem;
   }
 
   .main-nav {
-    order: 3;
-    width: 100%;
-    justify-content: center;
+    display: none;
   }
 
-  .page-banner {
-    padding: 2rem 1rem;
+  .page-head-inner,
+  .main-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
-  .banner-content h2 {
-    font-size: 1.75rem;
+  .page-title {
+    font-size: 1.35rem;
   }
 
-  .novel-grid {
+  .sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-section {
+    grid-column: span 1;
+  }
+
+  .novel-grid,
+  .skeleton-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
+}
 
-  .card-image {
-    height: 180px;
+@media (max-width: 420px) {
+  .novel-grid,
+  .skeleton-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 }
 </style>

@@ -14,6 +14,7 @@ const lazyLoad: Directive = {
               img.src = src
               img.onerror = () => {
                 img.src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'
+                img.onerror = null
               }
             }
             observer.unobserve(el)

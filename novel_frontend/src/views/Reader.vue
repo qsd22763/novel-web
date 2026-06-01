@@ -162,6 +162,7 @@ const theme = ref('light')
 const fontSize = ref('medium')
 const isBookmarked = ref(false)
 const currentBookmarkId = ref<number | null>(null)
+const bookmarkLoading = ref(false)
 
 const showThemeMenu = ref(false)
 const showFontMenu = ref(false)
@@ -252,7 +253,7 @@ const checkBookmark = async () => {
   try {
     const res: any = await bookmarkApi.byChapter(chapter.value.id)
     isBookmarked.value = true
-    currentBookmarkId.value = res.id
+    currentBookmarkId.value = res.id || res.pk || null
   } catch (error) {
     isBookmarked.value = false
     currentBookmarkId.value = null
@@ -260,31 +261,40 @@ const checkBookmark = async () => {
 }
 
 const toggleBookmark = async () => {
-  if (!chapter.value) return
+  if (!chapter.value || bookmarkLoading.value) return
+  bookmarkLoading.value = true
 
-  if (isBookmarked.value && currentBookmarkId.value) {
-    try {
+  try {
+    if (isBookmarked.value && currentBookmarkId.value) {
       await bookmarkApi.remove(currentBookmarkId.value)
       isBookmarked.value = false
       currentBookmarkId.value = null
       ElMessage.success('已取消书签')
-    } catch (error) {
-      ElMessage.error('取消书签失败')
-    }
-  } else {
-    try {
+    } else {
       const res: any = await bookmarkApi.add({
-        novel_id: chapter.value.novel_id,
-        chapter_id: chapter.value.id,
+        novel: chapter.value.novel_id,
+        chapter: chapter.value.id,
         position: readingProgress.value,
         note: chapter.value.title,
       })
       isBookmarked.value = true
-      currentBookmarkId.value = res.id
+      currentBookmarkId.value = res?.id ?? res?.pk ?? null
       ElMessage.success('已添加书签')
-    } catch (error) {
-      ElMessage.error('添加书签失败')
     }
+  } catch (err: any) {
+    const detail = err?.response?.data
+    let msg = isBookmarked.value ? '取消书签失败' : '添加书签失败'
+    if (detail) {
+      if (typeof detail === 'string') msg = detail
+      else if (detail.detail) msg = detail.detail
+      else if (typeof detail === 'object') {
+        const msgs = Object.values(detail).flat()
+        if (msgs.length) msg = msgs.join('; ')
+      }
+    }
+    ElMessage.error(msg)
+  } finally {
+    bookmarkLoading.value = false
   }
 }
 

@@ -77,6 +77,9 @@ export const authApi = {
 
   updateProfile: (data: Record<string, any>) =>
     request.put('/auth/update_profile/', data),
+
+  changePassword: (data: { old_password: string; new_password: string }) =>
+    request.post('/auth/change_password/', data),
 }
 
 export const favoriteApi = {
@@ -108,7 +111,7 @@ export const bookmarkApi = {
   list: () =>
     request.get('/bookmarks/'),
 
-  add: (data: { novel_id: number; chapter_id: number; position: number; note?: string }) =>
+  add: (data: { novel: number; chapter: number; position: number; note?: string }) =>
     request.post('/bookmarks/', data),
 
   remove: (id: number) =>

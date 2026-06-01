@@ -109,6 +109,7 @@ class Bookmark(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookmarks', verbose_name='用户')
     novel = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='bookmarks', verbose_name='小说')
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, verbose_name='章节')
+    position = models.IntegerField(default=0, verbose_name='阅读位置(%)')
     note = models.CharField(max_length=200, blank=True, default='', verbose_name='备注')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
 

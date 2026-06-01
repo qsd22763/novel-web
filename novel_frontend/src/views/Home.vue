@@ -145,6 +145,9 @@
               <div class="card-content">
                 <h3 class="card-title">{{ novel.title }}</h3>
                 <p class="card-author">{{ novel.author }}</p>
+                <div v-if="novel.tags" class="card-tags">
+                  <span v-for="tag in novel.tags.split(',').map(t=>t.trim()).filter(Boolean)" :key="tag" class="card-tag">{{ tag }}</span>
+                </div>
                 <p class="card-desc">{{ novel.description || '暂无简介' }}</p>
                 <div class="card-meta">
                   <span class="meta-item">
@@ -1026,6 +1029,22 @@ onUnmounted(() => {
   font-size: 0.78rem;
   color: var(--text-muted);
   margin: 0 0 0.25rem;
+}
+
+.card-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.card-tag {
+  font-size: 0.68rem;
+  color: #9CA3AF;
+  background: rgba(156,163,175,0.1);
+  border: 1px solid rgba(156,163,175,0.2);
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-family: var(--font-sans-cn);
 }
 
 .card-desc {

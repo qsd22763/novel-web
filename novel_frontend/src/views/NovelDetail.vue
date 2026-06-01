@@ -64,6 +64,11 @@
               <p class="hero-author">{{ novel.author }}</p>
               <div class="hero-tags">
                 <span class="tag tag-category">{{ novel.category }}</span>
+                <span
+                  v-for="tag in parsedTags"
+                  :key="tag"
+                  class="tag tag-custom"
+                >{{ tag }}</span>
                 <span class="tag" :class="novel.status === 1 ? 'tag-complete' : 'tag-ongoing'">
                   {{ novel.status === 1 ? '已完结' : '连载中' }}
                 </span>
@@ -208,6 +213,12 @@
                       <span v-for="i in 5" :key="i" class="mini-star" :class="{ on: i <= c.rating }">★</span>
                     </span>
                     <span class="comment-time">{{ formatTime(c.created_at) }}</span>
+                    <button
+                      v-if="isOwnComment(c)"
+                      class="comment-delete"
+                      @click="onDeleteComment(c.id)"
+                      title="删除评论"
+                    >✕</button>
                   </div>
                   <p class="comment-text">{{ c.content }}</p>
                 </div>
@@ -291,14 +302,38 @@ const onSubmitComment = async () => {
     await loadComments(novel.value.id)
     ElMessage.success('评论已发表')
   } catch (err: any) {
-    ElMessage.error(err?.response?.data?.detail || '发表失败')
+    ElMessage.error(err?.response?.data?.detail || '评论失败')
   } finally {
     submitting.value = false
   }
 }
 
+const currentUserId = computed(() => {
+  try { return JSON.parse(localStorage.getItem('user') || '{}').id } catch { return null }
+})
+
+const isOwnComment = (c: any) => {
+  return currentUserId.value && c.user === currentUserId.value
+}
+
+const onDeleteComment = async (commentId: number) => {
+  try {
+    await ElMessageBox.confirm('确定删除这条评论吗？', '提示', { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' })
+    await commentApi.remove(commentId)
+    comments.value = comments.value.filter((c: any) => c.id !== commentId)
+    ElMessage.success('已删除')
+  } catch (err: any) {
+    if (err !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
 const isLoggedIn = computed(() => {
   return !!localStorage.getItem('user')
+})
+
+const parsedTags = computed(() => {
+  if (!novel.value?.tags) return []
+  return novel.value.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
 })
 
 const formatCount = (num: number): string => {
@@ -753,6 +788,12 @@ onMounted(() => {
   background: rgba(34,197,94,0.15);
   color: #86EFAC;
   border: 1px solid rgba(34,197,94,0.35);
+}
+
+.tag-custom {
+  background: rgba(156,163,175,0.12);
+  color: #9CA3AF;
+  border: 1px solid rgba(156,163,175,0.3);
 }
 
 .content-wrapper {
@@ -1375,6 +1416,19 @@ onMounted(() => {
 .mini-star { color: #D8D2C4; font-size: 13px; }
 .mini-star.on { color: var(--accent); }
 .comment-time { color: #999; font-size: 12px; margin-left: auto; }
+.comment-delete {
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  line-height: 1;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+.comment-delete:hover { color: #e74c3c; background: rgba(231,76,60,0.08); }
 .comment-text {
   margin: 0;
   color: var(--ink);

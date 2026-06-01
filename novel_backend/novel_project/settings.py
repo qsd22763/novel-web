@@ -11,21 +11,25 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env')
+
+def env(key, default=''):
+    return os.environ.get(key, default)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w$#%do!leu90ta4mg-x0edz0%m*$3y3bph#nt^op7z$&&&t(=@'
+SECRET_KEY = env('SECRET_KEY', 'django-insecure-w$#%do!leu90ta4mg-x0edz0%m*$3y3bph#nt^op7z$&&&t(=@')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [h.strip() for h in env('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 
 
 # Application definition
@@ -79,8 +83,17 @@ WSGI_APPLICATION = 'novel_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': env('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': env('DB_NAME', 'novel_fiction'),
+        'USER': env('DB_USER', 'root'),
+        'PASSWORD': env('DB_PASSWORD', ''),
+        'HOST': env('DB_HOST', 'localhost'),
+        'PORT': env('DB_PORT', '3306'),
+        'OPTIONS': {
+            'charset': env('DB_CHARSET', 'utf8mb4'),
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+            'autocommit': True,
+        },
     }
 }
 

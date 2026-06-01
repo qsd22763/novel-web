@@ -71,5 +71,5 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bookmark
-        fields = ['id', 'user', 'novel', 'chapter', 'novel_title', 'chapter_title', 'note', 'created_at']
+        fields = ['id', 'user', 'novel', 'chapter', 'position', 'novel_title', 'chapter_title', 'note', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']

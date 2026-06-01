@@ -75,6 +75,32 @@ class AuthViewSet(viewsets.ViewSet):
             'user': UserSerializer(user).data
         })
 
+    @action(detail=False, methods=['post'])
+    def change_password(self, request):
+        if not request.user.is_authenticated:
+            return Response({'message': '未登录'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+
+        if not old_password or not new_password:
+            return Response({'old_password': ['请输入旧密码'], 'new_password': ['请输入新密码']}, status=400)
+
+        if len(new_password) < 6:
+            return Response({'new_password': ['密码至少6位']}, status=400)
+
+        user = request.user
+        if not user.check_password(old_password):
+            return Response({'old_password': ['旧密码不正确']}, status=400)
+
+        user.set_password(new_password)
+        user.save()
+
+        from django.contrib.auth import update_session_auth_hash
+        update_session_authhash(request, user)
+
+        return Response({'message': '密码修改成功'})
+
 
 class FavoriteViewSet(viewsets.ModelViewSet):
     serializer_class = FavoriteSerializer

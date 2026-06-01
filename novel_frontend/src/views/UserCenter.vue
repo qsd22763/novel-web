@@ -72,10 +72,16 @@
           <div v-show="activeTab === 'profile'" class="uc-pane">
             <div class="uc-pane__header">
               <span class="uc-pane__title">个人信息</span>
-              <button class="uc-btn-edit" @click="showEditDialog">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                编辑资料
-              </button>
+              <div class="uc-pane__actions">
+                <button class="uc-btn-edit" @click="showEditDialog">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  编辑资料
+                </button>
+                <button class="uc-btn-edit" @click="pwdDialogVisible = true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  修改密码
+                </button>
+              </div>
             </div>
             <div class="uc-info-list">
               <div class="uc-info-row">
@@ -286,6 +292,26 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="pwdDialogVisible" title="修改密码" width="420px" class="uc-dialog">
+      <el-form :model="pwdForm" label-width="80px" class="uc-dialog__form">
+        <el-form-item label="旧密码">
+          <el-input v-model="pwdForm.old_password" type="password" placeholder="输入当前密码" show-password />
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="pwdForm.new_password" type="password" placeholder="至少6位" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码">
+          <el-input v-model="pwdForm.confirm_password" type="password" placeholder="再次输入新密码" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="uc-dialog__footer">
+          <button class="uc-btn-cancel" @click="pwdDialogVisible = false">取消</button>
+          <button class="uc-btn-save" @click="handleChangePassword">确认修改</button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -310,6 +336,12 @@ const editForm = ref({
   avatar: '',
   email: '',
   phone: ''
+})
+const pwdDialogVisible = ref(false)
+const pwdForm = ref({
+  old_password: '',
+  new_password: '',
+  confirm_password: ''
 })
 
 const tabList = [
@@ -337,6 +369,38 @@ const handleUpdateProfile = async () => {
     loadUserInfo()
   } catch (error) {
     ElMessage.error('更新失败')
+  }
+}
+
+const handleChangePassword = async () => {
+  if (!pwdForm.value.old_password || !pwdForm.value.new_password) {
+    ElMessage.warning('请填写完整')
+    return
+  }
+  if (pwdForm.value.new_password.length < 6) {
+    ElMessage.warning('新密码至少6位')
+    return
+  }
+  if (pwdForm.value.new_password !== pwdForm.value.confirm_password) {
+    ElMessage.warning('两次密码不一致')
+    return
+  }
+  try {
+    await authApi.changePassword({
+      old_password: pwdForm.value.old_password,
+      new_password: pwdForm.value.new_password,
+    })
+    ElMessage.success('密码修改成功，下次登录生效')
+    pwdDialogVisible.value = false
+    pwdForm.value = { old_password: '', new_password: '', confirm_password: '' }
+  } catch (err: any) {
+    const data = err?.response?.data
+    if (data) {
+      const msg = Object.values(data).flat().join('; ')
+      ElMessage.error(msg)
+    } else {
+      ElMessage.error('修改失败')
+    }
   }
 }
 
@@ -824,6 +888,11 @@ onMounted(() => {
   margin-bottom: 1.75rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
+}
+.uc-pane__actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
 }
 
 .uc-pane__title {

@@ -240,4 +240,20 @@ onMounted(async () => {
   box-sizing: border-box;
 }
 .content-input:focus { border-color: #CA8A04; }
+
+@media (max-width: 768px) {
+  .head .inner { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .edit-body { padding: 20px 16px; }
+  .form-input { font-size: 16px; padding: 12px 14px; }
+  .content-input { min-height: 300px; font-size: 16px; line-height: 2; }
+  .toolbar { flex-wrap: wrap; gap: 8px; }
+  .toolbar-btn { font-size: 13px; padding: 7px 14px; }
+  .status-badge { font-size: 11px; padding: 3px 10px; }
+  .save-hint { font-size: 12px; }
+}
+@media (max-width: 480px) {
+  .head .inner { padding: 10px 14px; }
+  .page-title { font-size: 15px; }
+  .content-input { min-height: 250px; }
+}
 </style>

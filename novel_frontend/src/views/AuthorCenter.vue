@@ -323,4 +323,23 @@ onMounted(load)
 }
 .link-btn:hover { border-color: #CA8A04; color: #CA8A04; }
 .link-btn.danger:hover { border-color: #C62828; color: #C62828; }
+
+@media (max-width: 768px) {
+  .ac-inner { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
+  .ac-nav { font-size: 13px; }
+  .stats-section { grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 1.25rem 16px; }
+  .stat-card { padding: 14px 12px; }
+  .stat-value { font-size: 22px; }
+  .work-item { grid-template-columns: 70px 1fr auto; gap: 12px; padding: 14px; }
+  .work-cover img, .work-cover .cover-fallback { width: 60px; height: 80px; }
+  .work-actions { flex-direction: column; gap: 6px; }
+  .link-btn { font-size: 12px; padding: 5px 10px; }
+  .main { padding: 20px 16px 60px; }
+  .section-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+@media (max-width: 480px) {
+  .stats-section { grid-template-columns: 1fr 1fr; }
+  .brand { font-size: 16px; }
+  .section-title { font-size: 18px; }
+}
 </style>

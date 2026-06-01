@@ -315,4 +315,20 @@ onMounted(async () => {
   font-family: 'Noto Sans SC', sans-serif;
 }
 .audit-info strong { color: #CA8A04; margin-left: 6px; }
+
+@media (max-width: 768px) {
+  .inner { padding: 12px 16px; flex-wrap: wrap; gap: 12px; }
+  .edit-body { padding: 20px 16px; max-width: 100%; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-group { margin-bottom: 18px; }
+  .form-input, .form-textarea, .form-select { font-size: 15px; }
+  textarea.form-textarea { min-height: 140px; }
+  .cover-upload-area { height: 160px; }
+  .btn-row { flex-direction: column-reverse; }
+  .btn-primary, .btn-secondary { width: 100%; text-align: center; justify-content: center; }
+}
+@media (max-width: 480px) {
+  .page-title { font-size: 20px; }
+  .edit-header .back-link { font-size: 13px; }
+}
 </style>

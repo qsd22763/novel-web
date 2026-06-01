@@ -189,4 +189,21 @@ onMounted(load)
 }
 .link:hover { border-color: #CA8A04; color: #CA8A04; }
 .link.danger:hover { border-color: #C62828; color: #C62828; }
+
+@media (max-width: 768px) {
+  .head .inner { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
+  .title { font-size: 17px; }
+  .main { padding: 24px 16px 60px; }
+  .work-item { grid-template-columns: 60px 1fr; gap: 12px; padding: 14px; }
+  .work-cover img, .work-cover .cover-fallback { width: 55px; height: 72px; }
+  .work-meta { flex-wrap: wrap; gap: 6px 14px; font-size: 12px; }
+  .work-actions { flex-direction: column; gap: 6px; }
+  .link-btn { font-size: 12px; padding: 5px 10px; }
+  .empty { padding: 40px 20px; font-size: 13px; }
+  .section-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+@media (max-width: 480px) {
+  .head .inner { padding: 12px 14px; }
+  .title { font-size: 15px; }
+}
 </style>

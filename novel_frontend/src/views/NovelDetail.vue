@@ -374,9 +374,15 @@ const loadNovelDetail = async () => {
       checkFavorite(id)
       loadReadChapters(id)
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('加载小说详情失败:', error)
     novel.value = null
+    // 超时/网络错误友好提示
+    const isTimeout = error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')
+    ElMessage.error({
+      message: isTimeout ? '请求超时，网络较慢，请稍后重试' : '小说详情加载失败，请重试',
+      duration: 4000,
+    })
   } finally {
     loading.value = false
   }

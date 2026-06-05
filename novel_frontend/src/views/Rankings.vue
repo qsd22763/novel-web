@@ -24,7 +24,8 @@
           </template>
           <template v-else>
             <router-link to="/user" class="rk-user-avatar">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <img v-if="userAvatar" :src="userAvatar" alt="头像" class="rk-avatar-img" />
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </router-link>
           </template>
         </div>
@@ -203,6 +204,7 @@ const loading = ref(false)
 const allRankings = ref<any[]>([])
 
 const isLoggedIn = computed(() => !!localStorage.getItem('user'))
+const userAvatar = ref('')
 
 const medalSvgs = [
   '<svg width="16" height="16" viewBox="0 0 24 24" fill="#CA8A04"><circle cx="12" cy="12" r="10" fill="none" stroke="#CA8A04" stroke-width="1.5"/><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>',
@@ -309,6 +311,10 @@ const goHome = () => {
 
 onMounted(() => {
   loadRankings()
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    userAvatar.value = user.avatar || ''
+  } catch {}
 })
 
 watch(activeTab, () => {
@@ -468,6 +474,13 @@ watch(activeTab, () => {
 .rk-user-avatar:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.rk-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .rk-banner {

@@ -1,5 +1,51 @@
 # 更新日志
 
+## [v1.2.0] - 2026-05-31
+
+### MySQL 迁移 + AI 封面 + 爬虫内容采集
+
+---
+
+### 🗄️ 数据库迁移 (SQLite → MySQL)
+- **数据库引擎**: SQLite3 → MySQL 8.0 (utf8mb4)
+- **驱动**: pymysql (`pymysql.install_as_MySQLdb()`)
+- **建表**: 16 张表（Django 内置 9 + 业务表 7）
+- **数据迁移**: 225 条记录无损迁移
+- **配置文件**: `.env` 环境变量化 + `python-dotenv`
+- **连通性测试**: `test_mysql.py` 全部通过
+
+### 🎨 AI 精美封面
+- **方案选型**: Trae text_to_image API(不可用) → Pollinations.ai
+- **生成结果**: 24/24 本小说全部重新生成 AI 插画封面
+- **技术细节**: SDXL 模型, seed 参数保证一致性, 28-63KB/张
+
+### 🕷️ 独立爬虫开发 (ink_crawler.py)
+- **源项目**: CopyBook (hahaha108/CopyBook) 剥离改造
+- **目标站**: xbiquge.la (quanshuwang.com 被 Cloudflare 屏蔽)
+- **架构**: 零框架依赖独立 Python 脚本 (requests + lxml + pymysql)
+- **功能**: 分类列表→详情页→章节目录→正文采集→自动入库
+- **清洗规则**: 去广告/去乱码/去水印/空章过滤(>50字)
+- **爬取成果**: 13 本新小说 × 50 章 = 650+ 章入库
+- **最终规模**: 37 本小说 / 1,212 章
+
+### 📁 新增文件
+| 文件 | 用途 |
+|------|------|
+| `.env` | MySQL 连接配置 |
+| `ink_crawler.py` | 独立小说爬虫脚本 |
+| `gen_ai_covers.py` | AI 封面批量生成 |
+| `task_plan.md` | 开发计划文档 |
+| `findings.md` | 技术发现记录 |
+| `progress.md` | 进度日志 |
+
+### 🔧 修改文件
+| 文件 | 变更 |
+|------|------|
+| `settings.py` | MySQL 配置 + .env 加载 + 环境变量化 |
+| `__init__.py` | pymysql 驱动注册 |
+
+---
+
 ## [v1.1.0] - 2026-05-29
 
 ### v1.0 后首次功能迭代 — Bug 修复 + 新功能 + 基础设施完善

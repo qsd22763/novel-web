@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Count, Avg
 from .models import Novel, Chapter
 
 
@@ -19,7 +20,12 @@ class NovelListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Novel
-        fields = ['id', 'title', 'author', 'cover', 'description', 'category', 'status', 'word_count', 'view_count', 'updated_at', 'latest_chapter']
+        fields = [
+            'id', 'title', 'author', 'cover', 'description', 'category',
+            'status', 'word_count', 'view_count', 'updated_at',
+            'latest_chapter',
+            'is_adapted', 'is_recommended', 'recommend_comment', 'topic_tag',
+        ]
 
     def get_latest_chapter(self, obj):
         latest = obj.chapters.order_by('-chapter_order').first()
@@ -27,24 +33,16 @@ class NovelListSerializer(serializers.ModelSerializer):
 
 
 class NovelDetailSerializer(serializers.ModelSerializer):
-    chapter_count = serializers.SerializerMethodField()
-    comment_count = serializers.SerializerMethodField()
-    avg_rating = serializers.SerializerMethodField()
+    """小说详情序列化器 — 使用 annotate 预计算统计字段，避免 N+1 查询"""
+    chapter_count = serializers.IntegerField(read_only=True)
+    comment_count = serializers.IntegerField(read_only=True)
+    avg_rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Novel
-        fields = ['id', 'title', 'author', 'cover', 'description', 'category', 'status', 'word_count', 'view_count', 'chapter_count', 'comment_count', 'avg_rating', 'created_at', 'updated_at']
-
-    def get_chapter_count(self, obj):
-        return obj.chapters.count()
-
-    def get_comment_count(self, obj):
-        return obj.comments.count()
-
-    def get_avg_rating(self, obj):
-        rated = obj.comments.filter(rating__gt=0)
-        count = rated.count()
-        if not count:
-            return 0
-        total = sum(rated.values_list('rating', flat=True))
-        return round(total / count, 1)
+        fields = [
+            'id', 'title', 'author', 'cover', 'description', 'category',
+            'status', 'word_count', 'view_count',
+            'chapter_count', 'comment_count', 'avg_rating',
+            'created_at', 'updated_at'
+        ]

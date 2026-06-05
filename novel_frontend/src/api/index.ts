@@ -55,6 +55,9 @@ export const novelApi = {
 
   category_stats: () =>
     request.get('/novels/category_stats/'),
+
+  homeData: () =>
+    request.get('/novels/home_data/'),
 }
 
 export const chapterApi = {
@@ -66,8 +69,14 @@ export const authApi = {
   login: (data: { username: string; password: string }) =>
     request.post('/auth/login/', data),
 
-  register: (data: { username: string; email: string; password: string; password_confirm: string }) =>
+  adminLogin: (data: { username: string; password: string }) =>
+    request.post('/auth/admin_login/', data),
+
+  register: (data: { username: string; email: string; password: string; password_confirm: string; verification_code?: string }) =>
     request.post('/auth/register/', data),
+
+  sendVerificationCode: (email: string) =>
+    request.post('/auth/send_verification_code/', { email }),
 
   logout: () =>
     request.post('/auth/logout/'),
@@ -80,6 +89,19 @@ export const authApi = {
 
   changePassword: (data: { old_password: string; new_password: string }) =>
     request.post('/auth/change_password/', data),
+
+  // 第三方OAuth登录
+  getQQAuthUrl: () =>
+    request.get('/auth/qq_login/', { params: {} }),
+
+  qqCallback: (code: string, state?: string) =>
+    request.get('/auth/qq_login/', { params: { code, state } }),
+
+  wechatLogin: (code: string, state?: string) =>
+    request.get('/auth/wechat_login/', { params: { code, state } }),
+
+  oauthCallback: (provider: 'qq' | 'wechat', code: string, state?: string) =>
+    request.get('/auth/oauth_callback/', { params: { provider, code, state } }),
 }
 
 export const favoriteApi = {
@@ -228,4 +250,177 @@ export const commentApi = {
 
   stats: (novelId: number) =>
     request.get('/comments/stats/', { params: { novel: novelId } }),
+}
+
+export interface DashboardStats {
+  total_books: number
+  total_users: number
+  today_reads: number
+  new_comments: number
+  books_change: number
+  users_change: number
+  reads_change: number
+  comments_change: number
+}
+
+export interface AdminAdvertisement {
+  id: number
+  title: string
+  image_url: string
+  link_url: string
+  position: string
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface AdminAnnouncement {
+  id: number
+  title: string
+  content: string
+  announcement_type: 'notice' | 'maintenance' | 'activity'
+  is_pinned: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  announcement_type_display: string
+}
+
+export interface AdminBook {
+  id: number
+  title: string
+  author: string
+  cover: string
+  category: string
+  status: number
+  status_display: string
+  word_count: number
+  view_count: number
+  chapter_count: number
+  favorite_count: number
+  audit_status: number
+  audit_status_display: string
+  created_at: string
+  updated_at: string
+}
+
+export const adminApi = {
+  dashboardStats: () =>
+    request.get<DashboardStats>('/admin/books/dashboard_stats/'),
+
+  advertisementList: (params?: { page?: number; page_size?: number; is_active?: boolean }) =>
+    request.get<PaginatedResponse<AdminAdvertisement>>('/admin/advertisements/', { params }),
+
+  advertisementDetail: (id: number) =>
+    request.get<AdminAdvertisement>(`/admin/advertisements/${id}/`),
+
+  createAdvertisement: (data: Partial<AdminAdvertisement>) =>
+    request.post<AdminAdvertisement>('/admin/advertisements/', data),
+
+  updateAdvertisement: (id: number, data: Partial<AdminAdvertisement>) =>
+    request.patch<AdminAdvertisement>(`/admin/advertisements/${id}/`, data),
+
+  deleteAdvertisement: (id: number) =>
+    request.delete(`/admin/advertisements/${id}/`),
+
+  toggleAdvertisementActive: (id: number) =>
+    request.post(`/admin/advertisements/${id}/toggle_active/`),
+
+  announcement: {
+    list: (params?: { page?: number; page_size?: number; announcement_type?: string; is_active?: boolean | null }) =>
+      request.get<PaginatedResponse<AdminAnnouncement>>('/admin/announcements/', { params }),
+
+    create: (data: Partial<AdminAnnouncement>) =>
+      request.post<AdminAnnouncement>('/admin/announcements/', data),
+
+    update: (id: number, data: Partial<AdminAnnouncement>) =>
+      request.patch<AdminAnnouncement>(`/admin/announcements/${id}/`, data),
+
+    delete: (id: number) =>
+      request.delete(`/admin/announcements/${id}/`),
+
+    togglePin: (id: number) =>
+      request.post(`/admin/announcements/${id}/toggle_pin/`),
+
+    publish: (id: number) =>
+      request.post(`/admin/announcements/${id}/publish/`),
+
+    withdraw: (id: number) =>
+      request.post(`/admin/announcements/${id}/withdraw/`),
+  },
+
+  bookList: (params?: { page?: number; page_size?: number; category?: string; search?: string; status?: string }) =>
+    request.get<PaginatedResponse<AdminBook>>('/admin/books/', { params }),
+
+  bookDetail: (id: number) =>
+    request.get<AdminBook>(`/admin/books/${id}/`),
+
+  updateBookStatus: (id: number, data: { status: number }) =>
+    request.patch(`/admin/books/${id}/`, data),
+
+  batchUpdateBooks: (ids: number[], action: 'approve' | 'reject' | 'delete') =>
+    request.post('/admin/books/batch_action/', { ids, action }),
+
+  exportBooks: (params?: { category?: string; status?: string; audit_status?: string; search?: string; word_count_min?: string; word_count_max?: string }) =>
+    request.get('/admin/books/export_excel/', { params, responseType: 'blob' }),
+
+  // ── 新书审核 ──
+  reviewList: (params?: { page?: number; page_size?: number; audit_status?: string; search?: string }) =>
+    request.get<PaginatedResponse<AdminBook>>('/admin/books/', { params: { ...params, audit_status: params?.audit_status || '1' } }),
+
+  approveBook: (id: number) =>
+    request.post(`/admin/books/${id}/review_approve/`),
+
+  rejectBook: (id: number, reason: string) =>
+    request.post(`/admin/books/${id}/review_reject/`, { reject_reason: reason }),
+
+  category: {
+    list: (params?: any) =>
+      request.get('/admin/categories/', { params }),
+
+    tree: () =>
+      request.get('/admin/categories/tree/'),
+
+    create: (data: any) =>
+      request.post('/admin/categories/', data),
+
+    update: (id: number, data: any) =>
+      request.patch(`/admin/categories/${id}/`, data),
+
+    delete: (id: number) =>
+      request.delete(`/admin/categories/${id}/`),
+
+    toggle: (id: number) =>
+      request.post(`/admin/categories/${id}/toggle/`),
+  },
+
+  dashboard: {
+    fullStats: () =>
+      request.get('/admin/books/full_stats/'),
+  },
+}
+
+// 签到相关
+export const signinApi = {
+  doSignin: () =>
+    request.post('/signin/do_signin/'),
+
+  getStatus: () =>
+    request.get('/signin/status/'),
+}
+
+// 充值相关
+export const rechargeApi = {
+  getPlans: () =>
+    request.get('/recharge/'),
+
+  createOrder: (planId: number) =>
+    request.post('/recharge/create_order/', { plan_id: planId }),
+
+  myOrders: () =>
+    request.get('/recharge/my_orders/'),
+
+  vipStatus: () =>
+    request.get('/recharge/vip_status/'),
 }

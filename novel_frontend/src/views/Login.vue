@@ -48,6 +48,27 @@
           class="lp-form"
           @keyup.enter="handleSubmit"
         >
+          <el-form-item v-if="isLogin" label="身份选择" class="lp-form__item lp-form__item--role">
+            <div class="lp-role-selector">
+              <label
+                class="lp-role-option"
+                :class="{ 'lp-role-option--active': userRole === 'user' }"
+                @click="userRole = 'user'"
+              >
+                <span class="lp-role-radio"></span>
+                <span class="lp-role-label">普通用户</span>
+              </label>
+              <label
+                class="lp-role-option"
+                :class="{ 'lp-role-option--active': userRole === 'admin' }"
+                @click="userRole = 'admin'"
+              >
+                <span class="lp-role-radio"></span>
+                <span class="lp-role-label">管理员用户</span>
+              </label>
+            </div>
+          </el-form-item>
+
           <el-form-item label="用户名" prop="username" class="lp-form__item">
             <el-input
               v-model="form.username"
@@ -61,11 +82,32 @@
           <el-form-item v-if="!isLogin" label="邮箱" prop="email" class="lp-form__item">
             <el-input
               v-model="form.email"
-              placeholder="请输入邮箱地址"
+              placeholder="请输入QQ邮箱 (xxx@qq.com)"
               size="large"
               :prefix-icon="Message"
               class="lp-input"
             />
+          </el-form-item>
+
+          <el-form-item v-if="!isLogin" label="验证码" prop="verification_code" class="lp-form__item lp-form__item--code">
+            <div class="lp-code-row">
+              <el-input
+                v-model="form.verification_code"
+                placeholder="请输入6位验证码"
+                size="large"
+                class="lp-code__input"
+                maxlength="6"
+              />
+              <button
+                type="button"
+                class="lp-code__btn"
+                :class="{ 'lp-code__btn--disabled': isCountingDown || !form.email }"
+                :disabled="isCountingDown || !form.email"
+                @click.prevent="handleSendCode"
+              >
+                {{ isCountingDown ? `${countdown}s后重试` : '获取验证码' }}
+              </button>
+            </div>
           </el-form-item>
 
           <el-form-item label="密码" prop="password" class="lp-form__item">
@@ -92,10 +134,16 @@
             />
           </el-form-item>
 
-          <el-form-item v-if="isLogin" class="lp-form__item lp-form__item--options">
+          <el-form-item v-if="isLogin && userRole === 'user'" class="lp-form__item lp-form__item--options">
             <div class="lp-options">
               <el-checkbox v-model="rememberMe" class="lp-checkbox">记住我</el-checkbox>
               <a href="#" class="lp-forgot" @click.prevent>忘记密码？</a>
+            </div>
+          </el-form-item>
+
+          <el-form-item v-if="isLogin && userRole === 'admin'" class="lp-form__item lp-form__item--options">
+            <div class="lp-options">
+              <el-checkbox v-model="rememberMe" class="lp-checkbox">记住我</el-checkbox>
             </div>
           </el-form-item>
 
@@ -112,7 +160,7 @@
           </el-form-item>
         </el-form>
 
-        <footer class="lp-card__footer">
+        <footer v-if="userRole === 'user'" class="lp-card__footer">
           <p class="lp-card__footer-text">
             {{ isLogin ? '还没有账号？' : '已有账号？' }}
             <span class="lp-toggle" @click="toggleMode">
@@ -128,40 +176,92 @@
         </div>
 
         <div class="lp-social">
-          <button class="lp-social__btn" title="微信登录" @click.prevent>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <!-- 微信扫码登录 -->
+          <button class="lp-social__btn lp-social__btn--wechat" title="微信登录" @click.prevent="handleWechatLogin">
+            <svg class="lp-icon-wechat" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.37 10.37 0 002.832.403c.276 0 .543-.027.811-.063-.171-.503-.264-1.03-.264-1.574 0-3.614 3.093-6.54 6.91-6.54.36 0 .713.028 1.063.07C16.29 4.688 12.893 2.188 8.691 2.188zm-2.78 4.43c.58 0 1.05.468 1.05 1.045s-.47 1.045-1.05 1.045-1.05-.468-1.05-1.045.47-1.045 1.05-1.045zm5.56 0c.58 0 1.05.468 1.05 1.045s-.47 1.045-1.05 1.045-1.05-.468-1.05-1.045.47-1.045 1.05-1.05z"/>
+              <path d="M23.996 14.867c0-3.382-3.23-6.126-7.215-6.126S9.566 11.485 9.566 14.867c0 3.382 3.23 6.126 7.215 6.126a8.35 8.35 0 002.34-.334.694.694 0 01.592.079l1.574.92a.275.275 0 00.138.045c.134 0 .244-.108.244-.243 0-.06-.024-.119-.039-.177l-.322-1.223a49.3 49.3 0 01.176-.549c1.512-1.224 2.512-3.079 2.512-5.144zM10.365 15.08c-.48 0-.87-.387-.87-.864s.39-.864.87-.864.87.387.87.864-.39.864-.87.864zm4.632 0c-.48 0-.87-.387-.87-.864s.39-.864.87-.864.87.387.87.864-.39.864-.87.864z"/>
+            </svg>
           </button>
-          <button class="lp-social__btn" title="QQ登录" @click.prevent>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg>
+          <!-- QQ 登录 -->
+          <button class="lp-social__btn lp-social__btn--qq" title="QQ登录" @click.prevent="handleQQLogin">
+            <svg class="lp-icon-qq" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path d="M21.395 15.035a39.548 39.548 0 00-.803-2.264l-1.079-2.695c.001-.032.014-.602.014-.895C19.527 5.88 16.295 2 12 2S4.473 5.88 4.473 9.181c0 .293.013.863.014.895L3.408 12.77a39.548 39.548 0 00-.803 2.264c-.751 2.441-.506 3.957-.25 4.28.518.642 1.854.79 2.76.568l.77-.192c.598-.149 1.178-.294 1.51-.294.168 0 .348.02.53.06A10 10 0 0012 19.82c1.393 0 2.73-.307 3.974-.863.183-.04.363-.06.531-.06.332 0 .912.145 1.51.294l.77.192c.906.222 2.242.074 2.76-.568.256-.323.501-1.839-.25-4.28zM12 4.5c2.62 0 4.75 2.015 4.75 4.5S14.62 13.5 12 13.5 7.25 11.485 7.25 9.5 9.38 4.5 12 4.5z"/>
+              <circle cx="9.5" cy="9" r="1.25"/>
+              <circle cx="14.5" cy="9" r="1.25"/>
+            </svg>
           </button>
+          <!-- GitHub 登录（保留原有） -->
           <button class="lp-social__btn" title="GitHub登录" @click.prevent>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           </button>
         </div>
+
+        <!-- 微信二维码弹窗 -->
+        <Teleport to="body">
+          <Transition name="lp-qrcode-fade">
+            <div v-if="showWechatQR" class="lp-qrcode-overlay" @click.self="showWechatQR = false">
+              <div class="lp-qrcode-dialog">
+                <div class="lp-qrcode-dialog__header">
+                  <span class="lp-qrcode-dialog__title">微信扫码登录</span>
+                  <button class="lp-qrcode-dialog__close" @click="showWechatQR = false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+                <div class="lp-qrcode-body">
+                  <div v-if="wechatLoading" class="lp-qrcode-loading">
+                    <div class="lp-qrcode-loading__spinner"></div>
+                    <p>正在生成二维码...</p>
+                  </div>
+                  <div v-else-if="wechatQRUrl" class="lp-qrcode-img-wrap">
+                    <img :src="wechatQRUrl" alt="微信扫码" class="lp-qrcode-img" />
+                    <p class="lp-qrcode-tip">请使用微信扫一扫登录</p>
+                  </div>
+                  <div v-else class="lp-qrcode-error">
+                    <p>二维码加载失败</p>
+                    <button class="lp-qrcode-retry" @click="handleWechatLogin">重试</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </Teleport>
       </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Message, Lock } from '@element-plus/icons-vue'
 import { authApi } from '../api'
 
 const router = useRouter()
+const route = useRoute()
 
 const isLogin = ref(true)
 const loading = ref(false)
 const rememberMe = ref(false)
+const userRole = ref<'user' | 'admin'>('user')
 const formRef = ref()
+// 验证码倒计时
+const isCountingDown = ref(false)
+const countdown = ref(60)
+let timer: ReturnType<typeof setInterval> | null = null
+
+// 微信扫码弹窗
+const showWechatQR = ref(false)
+const wechatLoading = ref(false)
+const wechatQRUrl = ref('')
 
 const form = reactive({
   username: '',
   email: '',
   password: '',
   password_confirm: '',
+  verification_code: '',
 })
 
 const validatePasswordConfirm = (_rule: any, value: any, callback: any) => {
@@ -189,12 +289,133 @@ const rules = computed(() => ({
     { required: true, message: '请确认密码', trigger: 'blur' },
     { validator: validatePasswordConfirm, trigger: 'blur' },
   ],
+  verification_code: isLogin.value ? [] : [
+    { required: true, message: '请输入邮箱验证码', trigger: 'blur' },
+    { len: 6, message: '验证码为6位数字', trigger: 'blur' },
+  ],
 }))
 
 const toggleMode = () => {
   isLogin.value = !isLogin.value
   formRef.value?.clearValidate()
 }
+
+// 发送验证码
+const handleSendCode = async () => {
+  if (!form.email) {
+    ElMessage.warning('请先输入QQ邮箱')
+    return
+  }
+  if (!form.email.endsWith('@qq.com')) {
+    ElMessage.warning('仅支持QQ邮箱注册（xxx@qq.com）')
+    return
+  }
+  try {
+    await authApi.sendVerificationCode(form.email)
+    ElMessage.success('验证码已发送，请查收邮件')
+    startCountdown()
+  } catch (error: any) {
+    const detail = error?.response?.data
+    if (detail?.email) {
+      ElMessage.error(detail.email[0])
+    } else {
+      ElMessage.error(error?.response?.data?.detail || '发送失败，请稍后重试')
+    }
+  }
+}
+
+// 启动60s倒计时
+const startCountdown = () => {
+  isCountingDown.value = true
+  countdown.value = 60
+  timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      stopCountdown()
+    }
+  }, 1000)
+}
+
+// 停止倒计时
+const stopCountdown = () => {
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
+  isCountingDown.value = false
+  countdown.value = 60
+}
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
+
+// ── QQ登录：跳转QQ授权页面 ──
+const handleQQLogin = async () => {
+  try {
+    const res: any = await authApi.getQQAuthUrl()
+    if (res?.auth_url) {
+      window.location.href = res.auth_url
+    } else {
+      ElMessage.warning('QQ授权地址获取失败，请稍后重试')
+    }
+  } catch {
+    ElMessage.error('QQ登录服务暂时不可用')
+  }
+}
+
+// ── 微信登录：弹窗展示二维码 ──
+const handleWechatLogin = async () => {
+  showWechatQR.value = true
+  wechatLoading.value = true
+  wechatQRUrl.value = ''
+
+  try {
+    // 获取微信授权URL（含二维码参数）
+    const res: any = await authApi.wechatLogin('', 'login_qr')
+    if (res?.auth_url) {
+      // 使用二维码API生成图片
+      wechatQRUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(res.auth_url)}`
+    } else {
+      wechatQRUrl.value = ''
+    }
+  } catch {
+    wechatQRUrl.value = ''
+  } finally {
+    wechatLoading.value = false
+  }
+}
+
+// ── 页面加载时检测OAuth回调 ──
+const handleOAuthCallback = async () => {
+  const code = route.query.code as string
+  const provider = route.query.provider as string || route.query.state as string
+
+  if (!code) return
+
+  try {
+    let res: any
+    if (provider === 'wechat' || route.query.state === 'wechat_login') {
+      res = await authApi.wechatLogin(code)
+    } else {
+      // 默认走 QQ 回调
+      res = await authApi.qqCallback(code, provider)
+    }
+
+    if (res?.token) {
+      localStorage.setItem('auth_token', res.token)
+      localStorage.setItem('user_info', JSON.stringify(res.user))
+      ElMessage.success('第三方登录成功')
+      router.push('/')
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.error || error?.response?.data?.detail || '第三方登录失败')
+  }
+}
+
+onMounted(() => {
+  handleOAuthCallback()
+})
 
 const handleSubmit = async () => {
   const valid = await formRef.value?.validate().catch(() => false)
@@ -203,20 +424,34 @@ const handleSubmit = async () => {
   loading.value = true
   try {
     if (isLogin.value) {
-      const res: any = await authApi.login({
-        username: form.username,
-        password: form.password,
-      })
-      const user = res.user || res
-      localStorage.setItem('user', JSON.stringify(user))
-      ElMessage.success('登录成功')
-      router.push('/')
+      if (userRole.value === 'admin') {
+        // 管理员登录：去管理员表校验，跳转后台管理页
+        const res: any = await authApi.adminLogin({
+          username: form.username,
+          password: form.password,
+        })
+        const user = res.user || res
+        localStorage.setItem('user', JSON.stringify(user))
+        ElMessage.success('管理员登录成功')
+        router.push('/admin')
+      } else {
+        // 普通用户登录：去普通用户表校验，跳转阅读首页
+        const res: any = await authApi.login({
+          username: form.username,
+          password: form.password,
+        })
+        const user = res.user || res
+        localStorage.setItem('user', JSON.stringify(user))
+        ElMessage.success('登录成功')
+        router.push('/')
+      }
     } else {
       await authApi.register({
         username: form.username,
         email: form.email,
         password: form.password,
         password_confirm: form.password_confirm,
+        verification_code: form.verification_code,
       })
       ElMessage.success('注册成功，请登录')
       isLogin.value = true
@@ -240,34 +475,125 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.loli.net/css2?family=Cormorant+Garamond:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+@import url('https://fonts.loli.net/css2?family=Cormorant+Garamond:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
 
+/* ══════════════════════════════════════════════
+   Design Tokens — 轻奢新中式书香色系
+   ══════════════════════════════════════════════ */
 .lp-root {
-  --paper-bg: #FDFBF7;
-  --ink: #1A1A1A;
-  --muted: #6B7280;
-  --accent: #CA8A04;
-  --accent-dark: #A67C00;
-  --border: #E0E0E0;
-  --card-bg: #FFFFFF;
-  --input-bg: #F5F1EA;
-  --input-hover: #EDE8DF;
+  /* 宣纸米白 */
+  --rice: #FAF6F0;
+  --rice-warm: #FBF8F3;
+  --rice-cream: #F7F1E8;
+  --rice-pale: #FFFDF9;
+
+  /* 古墨棕 */
+  --ink: #1A1511;
+  --ink-warm: #251E18;
+  --ink-mid: #3D332A;
+  --brown-deep: #524438;
+  --brown: #736354;
+  --brown-soft: #9E8D7A;
+  --brown-fade: #C4B5A5;
+  --brown-dust: #DDD2C5;
+
+  /* 鎏金 */
+  --gold: #DDB96B;
+  --gold-main: #C9A04A;
+  --gold-deep: #A88532;
+  --gold-dim: #8E7028;
+  --gold-glow: rgba(221, 185, 107, 0.18);
+  --gold-halo: rgba(201, 160, 74, 0.12);
+  --gold-whisper: rgba(201, 160, 74, 0.06);
+
+  /* 功能 */
+  --card: #FFFCF7;
+  --input-bg: #F0E8DC;
+  --input-hover: #E8DDD0;
+  --border: #DED4C6;
+  --error: #B84A44;
+  --hint: #ADA092;
 
   min-height: 100vh;
   display: flex;
   font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background: var(--paper-bg);
+  background: var(--rice);
+  position: relative;
+  overflow-x: hidden;
 }
 
+/* ── 全局纸张颗粒肌理 ── */
+.lp-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.42;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* ── 全局环境柔光 — 右上角鎏金微晕 ── */
+.lp-root::after {
+  content: '';
+  position: fixed;
+  top: -15%;
+  right: -8%;
+  width: 55%;
+  height: 130%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 40% 30%, rgba(221, 185, 107, 0.045) 0%, transparent 60%),
+    radial-gradient(ellipse at 60% 70%, rgba(201, 160, 74, 0.028) 0%, transparent 55%);
+}
+
+/* ══════════════════════════════════════════════
+   1. 左侧侧边栏 — 暗纹古籍 + 径向渐变
+   ══════════════════════════════════════════════ */
 .lp-side {
-  width: 40%;
+  width: 45%;
   flex-shrink: 0;
   position: relative;
-  background: var(--ink);
+  /* 从上至下柔和深棕径向渐变 */
+  background:
+    radial-gradient(120% 100% at 50% -10%, rgba(45, 36, 28, 0.6) 0%, transparent 55%),
+    radial-gradient(80% 100% at 20% 110%, rgba(37, 30, 24, 0.5) 0%, transparent 50%),
+    linear-gradient(175deg, #1A1511 0%, #231C16 35%, #1A1511 70%, #14100D 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  z-index: 1;
+}
+
+/* 左侧 — 低透明度暗纹古籍毛笔字底图 */
+.lp-side::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='30' y='90' font-family='Noto Serif SC,STSong,SimSun,serif' font-size='72' font-weight='900' fill='%23DDB96B' opacity='0.6'%3E詩%3C/text%3E%3Ctext x='280' y='170' font-family='Noto Serif SC,STSong,SimSun,serif' font-size='56' font-weight='900' fill='%23DDB96B' opacity='0.4'%3E書%3C/text%3E%3Ctext x='60' y='280' font-family='Noto Serif SC,STSong,SimSun,serif' font-size='64' font-weight='900' fill='%23DDB96B' opacity='0.5'%3E畫%3C/text%3E%3Ctext x='260' y='360' font-family='Noto Serif SC,STSong,SimSun,serif' font-size='48' font-weight='900' fill='%23DDB96B' opacity='0.35'%3E韻%3C/text%3E%3Ctext x='150' y='220' font-family='Noto Serif SC,STSong,SimSun,serif' font-size='52' font-weight='900' fill='%23DDB96B' opacity='0.3'%3E雅%3C/text%3E%3C/svg%3E");
+  background-size: 320px 320px;
+  background-position: center;
+  filter: blur(1px);
+}
+
+/* 左侧 — 墨韵光斑 */
+.lp-side::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 25% 15%, rgba(221, 185, 107, 0.055) 0%, transparent 45%),
+    radial-gradient(ellipse at 75% 85%, rgba(221, 185, 107, 0.035) 0%, transparent 45%);
 }
 
 .lp-side__inner {
@@ -276,41 +602,68 @@ const handleSubmit = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  padding: 3rem 2.5rem;
+  gap: 2.4rem;
+  padding: 3.8rem 3.2rem;
+  max-width: 330px;
 }
 
+/* 装饰竖线 — 细分割金线 */
 .lp-side__deco-line {
   width: 1px;
-  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    var(--gold) 25%,
+    var(--gold) 75%,
+    transparent 100%
+  );
   align-self: center;
+  opacity: 0.5;
 }
 
 .lp-side__deco-line--top,
 .lp-side__deco-line--bottom {
-  height: 60px;
+  height: 52px;
 }
 
+/* ── 「墨香書閣」— 鎏金外发光 + 渐变描边 ── */
 .lp-side__title-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.15rem;
+  gap: 0.08rem;
 }
 
 .lp-side__char {
   font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif;
-  font-size: 2.8rem;
+  font-size: 3.4rem;
   font-weight: 900;
-  color: var(--accent);
-  line-height: 1.2;
-  letter-spacing: 0.05em;
+  color: var(--gold);
+  line-height: 1.12;
+  letter-spacing: 0.1em;
+  /* 外发光 + 微妙渐变描边效果 */
+  text-shadow:
+    0 0 48px rgba(221, 185, 107, 0.35),
+    0 0 96px rgba(221, 185, 107, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    0 0 1px rgba(221, 185, 107, 0.3);
+  animation: lp-char-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.lp-side__char:nth-child(1) { animation-delay: 0.06s; }
+.lp-side__char:nth-child(2) { animation-delay: 0.18s; }
+.lp-side__char:nth-child(3) { animation-delay: 0.30s; }
+.lp-side__char:nth-child(4) { animation-delay: 0.42s; }
+
+@keyframes lp-char-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.92); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* 分隔线 — 细金线装饰 */
 .lp-side__divider {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.3rem;
   width: 100%;
 }
 
@@ -319,47 +672,78 @@ const handleSubmit = async () => {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(202, 138, 4, 0.5), transparent);
+  background: linear-gradient(to right,
+    transparent 0%,
+    rgba(221, 185, 107, 0.35) 40%,
+    rgba(221, 185, 107, 0.5) 50%,
+    rgba(221, 185, 107, 0.35) 60%,
+    transparent 100%
+  );
 }
 
 .lp-side__diamond {
   width: 6px;
   height: 6px;
-  background: var(--accent);
+  background: var(--gold);
   transform: rotate(45deg);
   flex-shrink: 0;
+  box-shadow:
+    0 0 10px rgba(221, 185, 107, 0.5),
+    0 0 20px rgba(221, 185, 107, 0.2);
 }
 
+/* 引文 — 字重分层 + 字距精调 */
 .lp-side__quote {
   margin: 0;
   text-align: center;
-  padding: 0 1rem;
+  padding: 0.6rem 1.4rem;
+  position: relative;
 }
+
+.lp-side__quote::before,
+.lp-side__quote::after {
+  content: '"';
+  position: absolute;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 2.2rem;
+  color: rgba(221, 185, 107, 0.22);
+  line-height: 1;
+}
+
+.lp-side__quote::before { top: -0.4rem; left: 0.2rem; }
+.lp-side__quote::after { bottom: -1.1rem; right: 0.2rem; content: '"'; }
 
 .lp-side__quote-text {
   font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 2;
-  margin: 0 0 0.75rem;
-  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 2.15;
+  margin: 0 0 0.9rem;
+  letter-spacing: 0.12em;
 }
 
 .lp-side__quote-cite {
-  font-size: 0.78rem;
-  color: rgba(202, 138, 4, 0.6);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.73rem;
+  font-weight: 300;
+  color: rgba(221, 185, 107, 0.48);
   font-style: normal;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
 }
 
+/* 底部小字 — 弱化透明度 + 纵向呼吸感 */
 .lp-side__slogan {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.25);
-  letter-spacing: 0.2em;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.71rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.16);
+  letter-spacing: 0.32em;
   margin: 0;
+  text-transform: uppercase;
 }
 
+/* 背景汉字水印 — 更淡更雅 */
 .lp-side__bg-pattern {
   position: absolute;
   inset: 0;
@@ -372,322 +756,973 @@ const handleSubmit = async () => {
 
 .lp-side__kanji {
   font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 5rem;
+  font-size: 5.8rem;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.018);
+  color: rgba(221, 185, 107, 0.018);
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
 }
 
+/* ══════════════════════════════════════════════
+   2. 右侧登录卡片 — 宣纸渐变 + 悬浮浮空
+   ══════════════════════════════════════════════ */
 .lp-main {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem 2rem;
-  background: var(--paper-bg);
+  padding: 3.2rem 3.8rem;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 .lp-card {
   width: 100%;
   max-width: 420px;
+  /* 宣纸米白渐变底色 */
+  background:
+    linear-gradient(165deg, var(--rice-pale) 0%, var(--card) 40%, var(--rice-cream) 100%);
+  border-radius: 22px;
+  padding: 2.9rem 2.7rem 2.5rem;
+  /* 多层投影营造悬浮浮空效果 */
+  box-shadow:
+    0 2px 4px rgba(26, 21, 17, 0.03),
+    0 6px 28px rgba(26, 21, 17, 0.06),
+    0 14px 48px rgba(26, 21, 17, 0.05),
+    0 24px 72px rgba(26, 21, 17, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(210, 198, 182, 0.3);
+  /* 极淡鎏金细描边 */
+  border: 1px solid rgba(201, 160, 74, 0.12);
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  /* 入场动画：缓缓上浮 */
+  animation: lp-card-enter 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes lp-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 卡片悬浮 — 浮空感增强 */
+.lp-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 4px 8px rgba(26, 21, 17, 0.04),
+    0 10px 36px rgba(26, 21, 17, 0.08),
+    0 20px 60px rgba(26, 21, 17, 0.06),
+    0 32px 88px rgba(26, 21, 17, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(210, 198, 182, 0.3),
+    0 0 0 1px rgba(201, 160, 74, 0.1);
+}
+
+/* ── 头部 ── */
 .lp-card__header {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2.3rem;
 }
 
 .lp-card__logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  background: var(--ink);
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(145deg, var(--ink), #251E18);
   border-radius: 14px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
+  box-shadow:
+    0 4px 14px rgba(26, 21, 17, 0.22),
+    0 1px 3px rgba(26, 21, 17, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-card__logo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 45%, rgba(221, 185, 107, 0.07) 100%);
+  pointer-events: none;
 }
 
 .lp-card__logo-text {
   font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 0.9rem;
+  font-size: 0.91rem;
   font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.03em;
+  color: var(--gold);
+  letter-spacing: 0.05em;
 }
 
 .lp-card__title {
   font-family: 'Noto Serif SC', 'STSong', serif;
-  font-size: 1.85rem;
+  font-size: 1.78rem;
   font-weight: 700;
   color: var(--ink);
-  margin: 0 0 0.5rem;
-  letter-spacing: 0.03em;
+  margin: 0 0 0.42rem;
+  letter-spacing: 0.05em;
 }
 
 .lp-card__subtitle {
-  font-family: 'Libre Baskerville', 'Noto Sans SC', sans-serif;
-  font-size: 0.88rem;
-  color: var(--muted);
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.85rem;
+  color: var(--brown-soft);
   margin: 0;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  font-weight: 400;
 }
 
-.lp-form {
-  margin-bottom: 0;
-}
+/* ══════════════════════════════════════════════
+   3. 表单通用
+   ══════════════════════════════════════════════ */
+.lp-form { margin-bottom: 0; }
 
-.lp-form__item {
-  margin-bottom: 1.15rem;
-}
-
-.lp-form__item--options {
-  margin-bottom: 0.5rem;
-}
-
-.lp-form__item--submit {
-  margin-top: 1.5rem;
-  margin-bottom: 0;
-}
+.lp-form__item { margin-bottom: 1.18rem; }
+.lp-form__item--options { margin-bottom: 0.55rem; }
+.lp-form__item--role { margin-bottom: 1.12rem; }
+.lp-form__item--code { margin-bottom: 1.18rem; }
+.lp-form__item--submit { margin-top: 1.7rem; margin-bottom: 0; }
 
 .lp-form :deep(.el-form-item__label) {
   font-family: 'Noto Sans SC', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: #5C5040;
-  padding-bottom: 6px;
-  letter-spacing: 0.03em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--brown-deep);
+  padding-bottom: 7px;
+  letter-spacing: 0.05em;
+}
+
+.lp-form :deep(.el-form-item__label::before) {
+  color: var(--gold-main) !important;
 }
 
 .lp-form :deep(.el-form-item__error) {
-  font-size: 0.78rem;
-  color: #C0392B;
+  font-size: 0.75rem;
+  color: var(--error);
+  padding-top: 3px;
 }
 
+/* ══════════════════════════════════════════════
+   4. 身份选择器 — 浅棕鎏金渐变 + 内部柔光
+   ══════════════════════════════════════════════ */
+.lp-role-selector {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--input-bg);
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  position: relative;
+}
+
+.lp-role-selector:hover {
+  border-color: var(--brown-fade);
+  box-shadow: 0 0 0 3px var(--gold-whisper);
+}
+
+.lp-role-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  position: relative;
+  background: transparent;
+}
+
+/* 未选中态 — 哑光宣纸质感 */
+.lp-role-option:not(.lp-role-option--active):hover {
+  background: var(--input-hover);
+}
+
+/* 选中态 — 浅棕鎏金渐变 + 内部柔光 */
+.lp-role-option--active {
+  background: linear-gradient(135deg, #EADBC8 0%, #E2D2BC 50%, #D9C8AE 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(164, 140, 112, 0.1),
+    0 1px 4px rgba(82, 68, 56, 0.08);
+}
+
+/* 单选指示器 */
+.lp-role-radio {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid var(--brown-fade);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  background: var(--rice-pale);
+}
+
+.lp-role-option:not(.lp-role-option--active):hover .lp-role-radio {
+  border-color: var(--brown-soft);
+}
+
+.lp-role-option--active .lp-role-radio {
+  border-color: var(--gold-deep);
+  background: linear-gradient(145deg, var(--gold-main), var(--gold-deep));
+  box-shadow:
+    0 0 0 2.5px rgba(201, 160, 74, 0.18),
+    0 1px 3px rgba(168, 133, 50, 0.25);
+}
+
+.lp-role-option--active .lp-role-radio::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.lp-role-label {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--brown);
+  letter-spacing: 0.04em;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-role-option--active .lp-role-label {
+  color: var(--ink-mid);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════
+   5. 输入框 — 宣纸底色 + 聚焦鎏金柔光
+   ══════════════════════════════════════════════ */
 .lp-input :deep(.el-input__wrapper) {
   background: var(--input-bg);
-  border: 1.5px solid transparent;
-  border-radius: 10px;
-  padding: 2px 14px;
-  box-shadow: none !important;
-  transition: border-color 0.25s, background-color 0.25s;
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 3px 14px;
+  box-shadow:
+    inset 0 1px 3px rgba(82, 68, 56, 0.055),
+    0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 46px;
 }
 
+/* hover — 淡墨色渐变微光过渡 */
 .lp-input :deep(.el-input__wrapper:hover) {
   background: var(--input-hover);
-  border-color: rgba(202, 138, 4, 0.4);
+  border-color: var(--brown-fade);
+  box-shadow:
+    inset 0 1px 3px rgba(82, 68, 56, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
 
+/* focus — 描边变成鎏金柔光 */
 .lp-input :deep(.el-input__wrapper.is-focus) {
-  background: var(--card-bg);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.1) !important;
+  background: var(--rice-pale);
+  border-color: var(--gold-main);
+  box-shadow:
+    inset 0 1px 3px rgba(82, 68, 56, 0.03),
+    0 0 0 3.5px var(--gold-halo),
+    0 0 18px var(--gold-glow),
+    0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
 
 .lp-input :deep(.el-input__inner) {
   font-family: 'Noto Sans SC', sans-serif;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: var(--ink);
+  font-weight: 400;
 }
 
 .lp-input :deep(.el-input__inner::placeholder) {
-  color: #B8AD9E;
+  color: var(--hint);
+  font-weight: 300;
 }
 
 .lp-input :deep(.el-input__prefix-icon) {
-  color: #B8AD9E;
-  transition: color 0.2s;
+  color: var(--hint);
+  transition: color 0.3s ease;
+  font-size: 1rem;
 }
 
 .lp-input :deep(.el-input__wrapper.is-focus .el-input__prefix-icon) {
-  color: var(--accent);
+  color: var(--gold-main);
 }
 
+.lp-input :deep(.el-input__suffix-inner .el-icon) {
+  color: var(--hint);
+  transition: color 0.25s;
+}
+.lp-input :deep(.el-input__suffix-inner .el-icon:hover) {
+  color: var(--brown-soft);
+}
+
+/* ══════════════════════════════════════════════
+   5b. 验证码行 — 输入框 + 获取按钮
+   ══════════════════════════════════════════════ */
+.lp-code-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.lp-code__input {
+  flex: 1;
+}
+
+.lp-code__input :deep(.el-input__wrapper) {
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 3px 14px;
+  box-shadow:
+    inset 0 1px 3px rgba(82, 68, 56, 0.055),
+    0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 46px;
+}
+
+.lp-code__input :deep(.el-input__wrapper:hover) {
+  background: var(--input-hover);
+  border-color: var(--brown-fade);
+}
+
+.lp-code__input :deep(.el-input__wrapper.is-focus) {
+  background: var(--rice-pale);
+  border-color: var(--gold-main);
+  box-shadow:
+    inset 0 1px 3px rgba(82, 68, 56, 0.03),
+    0 0 0 3.5px var(--gold-halo),
+    0 0 18px var(--gold-glow),
+    0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+.lp-code__input :deep(.el-input__inner) {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.9rem;
+  color: var(--ink);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+}
+
+.lp-code__input :deep(.el-input__inner::placeholder) {
+  letter-spacing: 0.02em;
+}
+
+/* 获取验证码按钮 — 鎏金棕配色 */
+.lp-code__btn {
+  flex-shrink: 0;
+  padding: 0 16px;
+  height: 46px;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  border-radius: 11px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #FFFBF5;
+  letter-spacing: 0.04em;
+  /* 鎏金棕渐变 */
+  background: linear-gradient(135deg, #736354 0%, #A88532 60%, #DDB96B 100%);
+  box-shadow:
+    0 2px 8px rgba(115, 99, 84, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-code__btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  border-radius: 11px 11px 0 0;
+}
+
+.lp-code__btn:hover:not(.lp-code__btn--disabled):not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 14px rgba(168, 133, 50, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  filter: brightness(1.05);
+}
+
+.lp-code__btn:active:not(.lp-code__btn--disabled):not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+/* 禁用态 — 哑光灰 */
+.lp-code__btn--disabled,
+.lp-code__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 0 1px 4px rgba(82, 68, 56, 0.12) !important;
+  background: linear-gradient(135deg, #9E8D7A, #B5A48C) !important;
+}
+
+/* ══════════════════════════════════════════════
+   5c. 第三方登录 — QQ/微信图标专属样式
+   ══════════════════════════════════════════════ */
+.lp-icon-wechat {
+  color: #07C160;
+}
+
+.lp-icon-qq {
+  color: #12B7F5;
+}
+
+.lp-social__btn--wechat:hover .lp-icon-wechat {
+  filter: drop-shadow(0 0 6px rgba(7, 193, 96, 0.4));
+}
+
+.lp-social__btn--qq:hover .lp-icon-qq {
+  filter: drop-shadow(0 0 6px rgba(18, 183, 245, 0.4));
+}
+
+/* ══════════════════════════════════════════════
+   6. 微信二维码弹窗
+   ══════════════════════════════════════════════ */
+.lp-qrcode-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 21, 17, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.lp-qrcode-dialog {
+  width: 320px;
+  background: var(--rice-pale);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 20px 60px rgba(26, 21, 17, 0.3),
+    0 8px 24px rgba(26, 21, 17, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(201, 160, 74, 0.15);
+}
+
+.lp-qrcode-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lp-qrcode-dialog__title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink-mid);
+  letter-spacing: 0.04em;
+}
+
+.lp-qrcode-dialog__close {
+  cursor: pointer;
+  color: var(--brown-soft);
+  transition: color 0.2s ease;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.lp-qrcode-dialog__close:hover {
+  color: var(--ink-mid);
+  background: rgba(82, 68, 56, 0.06);
+}
+
+.lp-qrcode-body {
+  padding: 28px 24px 32px;
+  text-align: center;
+}
+
+/* 加载态 */
+.lp-qrcode-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.lp-qrcode-loading p {
+  font-size: 0.85rem;
+  color: var(--brown-soft);
+  margin: 0;
+}
+
+.lp-qrcode-loading__spinner {
+  width: 36px;
+  height: 36px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--gold-main);
+  border-radius: 50%;
+  animation: lp-spin 0.7s linear infinite;
+}
+
+/* 二维码图片 */
+.lp-qrcode-img-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-qrcode-img {
+  width: 180px;
+  height: 180px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  padding: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(82, 68, 56, 0.08);
+}
+
+.lp-qrcode-tip {
+  font-size: 0.82rem;
+  color: var(--brown-soft);
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+/* 错误态 */
+.lp-qrcode-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-qrcode-error p {
+  font-size: 0.85rem;
+  color: var(--brown-soft);
+  margin: 0;
+}
+
+.lp-qrcode-retry {
+  padding: 6px 18px;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--gold-main);
+  background: transparent;
+  border: 1.5px solid var(--gold-main);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.lp-qrcode-retry:hover {
+  background: var(--gold-glow);
+  transform: translateY(-1px);
+}
+
+/* 弹窗过渡动画 */
+.lp-qrcode-fade-enter-active,
+.lp-qrcode-fade-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-qrcode-fade-enter-active .lp-qrcode-dialog,
+.lp-qrcode-fade-leave-active .lp-qrcode-dialog {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lp-qrcode-fade-enter-from,
+.lp-qrcode-fade-leave-to {
+  opacity: 0;
+}
+
+.lp-qrcode-fade-enter-from .lp-qrcode-dialog,
+.lp-qrcode-fade-leave-to .lp-qrcode-dialog {
+  transform: scale(0.9) translateY(16px);
+}
+
+/* ══════════════════════════════════════════════
+   6. 辅助文字 — 对齐 + 鎏金下划线
+   ══════════════════════════════════════════════ */
 .lp-options {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  padding: 3px 0;
 }
 
 .lp-checkbox :deep(.el-checkbox__label) {
-  font-size: 0.83rem;
-  color: #7A6E60;
+  font-size: 0.81rem;
+  font-weight: 400;
+  color: var(--brown);
+  letter-spacing: 0.02em;
+  padding-left: 4px;
 }
 
 .lp-checkbox :deep(.el-checkbox__inner) {
-  border-color: #C9C0B0;
-  border-radius: 4px;
+  border-color: var(--brown-fade);
+  border-radius: 5px;
+  width: 16px; height: 16px;
+  transition: all 0.25s ease;
+  background: var(--rice-pale);
 }
 
 .lp-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--gold-main), var(--gold-deep));
+  border-color: var(--gold-main);
 }
 
+/* 忘记密码 / 注册切换 — hover 鎏金下划线 */
 .lp-forgot {
-  font-size: 0.83rem;
-  color: #9A8E7E;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.81rem;
+  font-weight: 400;
+  color: var(--brown-soft);
   text-decoration: none;
   cursor: pointer;
-  transition: color 0.2s;
+  letter-spacing: 0.01em;
+  position: relative;
+  transition: color 0.25s ease;
+}
+
+.lp-forgot::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 1px;
 }
 
 .lp-forgot:hover {
-  color: var(--accent);
+  color: var(--gold-main);
 }
 
+.lp-forgot:hover::after {
+  width: 100%;
+}
+
+/* ══════════════════════════════════════════════
+   7. 登录主按钮 — 扫光动效 + 浮雕质感
+   ══════════════════════════════════════════════ */
 .lp-submit {
   width: 100%;
-  height: 50px;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  height: 51px;
+  /* 深棕到哑金细腻渐变 */
+  background: linear-gradient(135deg, #4A3C30 0%, #735B3E 35%, #A88532 70%, #DDB96B 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: 13px;
   cursor: pointer;
-  transition: opacity 0.2s;
-  box-shadow: 0 4px 20px rgba(202, 138, 4, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 浮雕内阴影质感 */
+  box-shadow:
+    0 4px 18px rgba(74, 60, 48, 0.32),
+    0 1px 4px rgba(74, 60, 48, 0.18),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.12);
 }
 
+/* 顶部内发光浮雕 */
+.lp-submit::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52%;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  border-radius: 13px 13px 0 0;
+}
+
+/* ── 鎏金高光扫光动效 ── */
+.lp-submit::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.08) 65%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: skewX(-12deg);
+}
+
+/* hover: 上浮 + 触发扫光 */
 .lp-submit:hover {
-  opacity: 0.92;
+  transform: translateY(-2.5px);
+  box-shadow:
+    0 8px 28px rgba(74, 60, 48, 0.38),
+    0 3px 10px rgba(221, 185, 107, 0.15),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.1);
 }
 
+.lp-submit:hover::after {
+  left: 150%;
+}
+
+/* active: 下沉反馈 */
 .lp-submit:active {
-  opacity: 0.85;
+  transform: translateY(1px) scale(0.985);
+  box-shadow:
+    0 2px 8px rgba(74, 60, 48, 0.28),
+    inset 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-.lp-submit:disabled {
-  opacity: 0.6;
+.lp-submit:disabled,
+.lp-submit[disabled] {
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
+  box-shadow: 0 2px 8px rgba(74, 60, 48, 0.12) !important;
+}
+
+.lp-submit:hover:disabled::after,
+.lp-submit:disabled::after {
+  display: none;
 }
 
 .lp-submit__text {
   font-family: 'Noto Serif SC', 'STSong', serif;
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
-  letter-spacing: 0.15em;
+  color: #FFFBF5;
+  letter-spacing: 0.2em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  position: relative;
+  z-index: 1;
 }
 
 .lp-submit__loader {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255, 251, 245, 0.22);
+  border-top-color: #FFFBF5;
   border-radius: 50%;
   animation: lp-spin 0.6s linear infinite;
+  position: relative;
+  z-index: 1;
 }
 
-@keyframes lp-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes lp-spin { to { transform: rotate(360deg); } }
 
+/* ══════════════════════════════════════════════
+   8. 底部注册 & 分割线
+   ══════════════════════════════════════════════ */
 .lp-card__footer {
   text-align: center;
-  margin-top: 1.5rem;
+  margin-top: 1.65rem;
 }
 
 .lp-card__footer-text {
-  font-size: 0.87rem;
-  color: #9A8E7E;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.84rem;
+  color: var(--brown-soft);
   margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
+/* 注册链接 — 鎏金下划线 */
 .lp-toggle {
-  color: var(--accent);
-  font-weight: 500;
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--gold-main);
+  font-weight: 600;
   cursor: pointer;
   margin-left: 0.3em;
-  transition: color 0.2s;
+  position: relative;
+  transition: color 0.25s ease;
+  letter-spacing: 0.02em;
+}
+
+.lp-toggle::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 1px;
 }
 
 .lp-toggle:hover {
-  color: var(--accent-dark);
+  color: var(--gold-deep);
 }
 
+.lp-toggle:hover::after {
+  width: 100%;
+}
+
+/* 分割线 */
 .lp-divider {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin: 1.75rem 0 1.25rem;
+  gap: 0.9rem;
+  margin: 1.9rem 0 1.4rem;
 }
 
 .lp-divider__line {
   flex: 1;
   height: 1px;
-  background: #E8E0D0;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
 }
 
 .lp-divider__text {
-  font-size: 0.78rem;
-  color: #C0B8AA;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 0.75rem;
+  color: var(--brown-fade);
   flex-shrink: 0;
+  letter-spacing: 0.09em;
+  font-weight: 400;
 }
 
+/* ══════════════════════════════════════════════
+   9. 第三方登录图标 — 哑光底 + 鎏金填充过渡
+   ══════════════════════════════════════════════ */
 .lp-social {
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .lp-social__btn {
-  width: 46px;
-  height: 46px;
+  width: 49px;
+  height: 49px;
+  /* 哑光底色 */
   background: var(--input-bg);
-  border: 1.5px solid #E8E0D0;
-  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  border-radius: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7A6E60;
-  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+  color: var(--brown);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(82, 68, 56, 0.04);
 }
 
+/* hover: 浅鎏金填充过渡 */
 .lp-social__btn:hover {
-  background: var(--input-hover);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: linear-gradient(145deg, var(--input-hover), #EDE2D3);
+  border-color: var(--gold-main);
+  color: var(--gold-main);
+  transform: translateY(-2.5px);
+  box-shadow:
+    0 5px 16px rgba(201, 160, 74, 0.14),
+    0 2px 6px rgba(82, 68, 56, 0.06);
 }
 
+.lp-social__btn:active {
+  transform: translateY(0);
+}
+
+/* ══════════════════════════════════════════════
+   10. 响应式
+   ══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .lp-side__char {
-    font-size: 2.2rem;
-  }
+  .lp-side { width: 42%; }
+  .lp-side__char { font-size: 2.7rem; }
+  .lp-main { padding: 2.6rem 2.2rem; }
+  .lp-card { padding: 2.5rem 2.3rem 2.1rem; }
 }
 
 @media (max-width: 768px) {
-  .lp-side {
-    display: none;
-  }
-
+  .lp-side { display: none; }
   .lp-main {
     min-height: 100vh;
-    padding: 2.5rem 1.5rem;
+    padding: 2.3rem 1.5rem;
+    align-items: flex-start;
+    padding-top: 3.8rem;
+  }
+  .lp-card {
+    border-radius: 18px;
+    padding: 2.3rem 1.9rem 1.9rem;
+    box-shadow:
+      0 4px 20px rgba(26, 21, 17, 0.05),
+      0 12px 40px rgba(26, 21, 17, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85);
   }
 }
 
-@media (max-width: 375px) {
-  .lp-card__title {
-    font-size: 1.5rem;
-  }
+@media (max-width: 480px) {
+  .lp-card__title { font-size: 1.53rem; }
+  .lp-card { max-width: 100%; padding: 2.1rem 1.5rem 1.7rem; }
+  .lp-submit { height: 47px; border-radius: 12px; }
+  .lp-main { padding: 2rem 1.1rem; }
+  .lp-role-label { font-size: 0.8rem; }
+  .lp-role-option { padding: 10px 12px; }
+}
 
-  .lp-card {
-    max-width: 100%;
-  }
-
-  .lp-submit {
-    height: 46px;
-  }
-
-  .lp-main {
-    padding: 2rem 1rem;
+@media (prefers-reduced-motion: reduce) {
+  .lp-side__char,
+  .lp-submit,
+  .lp-submit::after,
+  .lp-social__btn,
+  .lp-role-option,
+  .lp-role-selector,
+  .lp-input :deep(.el-input__wrapper),
+  .lp-code__input :deep(.el-input__wrapper),
+  .lp-code__btn,
+  .lp-card,
+  .lp-forgot,
+  .lp-toggle,
+  .lp-qrcode-dialog,
+  .lp-qrcode-loading__spinner {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
   }
 }
 </style>

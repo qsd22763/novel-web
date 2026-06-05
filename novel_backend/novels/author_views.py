@@ -41,7 +41,7 @@ class AuthorNovelViewSet(viewsets.ModelViewSet):
                 user.pen_name = user.username
             user.save(update_fields=['is_author', 'pen_name'])
         author_name = user.pen_name or user.username
-        serializer.save(author_user=user, author=author_name)
+        serializer.save(author_user=user, author=author_name, audit_status=1)
 
     @action(detail=False, methods=['get'])
     def stats(self, request):

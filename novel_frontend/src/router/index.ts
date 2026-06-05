@@ -40,6 +40,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/user/signin',
+      name: 'SignIn',
+      component: () => import('../views/SignIn.vue'),
+      meta: { title: '每日签到', requiresAuth: true },
+    },
+    {
+      path: '/user/recharge',
+      name: 'Recharge',
+      component: () => import('../views/Recharge.vue'),
+      meta: { title: '会员充值', requiresAuth: true },
+    },
+    {
       path: '/rankings',
       name: 'Rankings',
       component: () => import('../views/Rankings.vue'),
@@ -81,6 +93,49 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin',
+      component: () => import('../views/admin/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        {
+          path: '',
+          name: 'AdminDashboard',
+          component: () => import('../views/admin/Dashboard.vue'),
+          meta: { title: '仪表盘' },
+        },
+        {
+          path: 'advertisements',
+          name: 'AdminAdvertisements',
+          component: () => import('../views/admin/Advertisements.vue'),
+          meta: { title: '广告管理' },
+        },
+        {
+          path: 'announcements',
+          name: 'AdminAnnouncements',
+          component: () => import('../views/admin/Announcements.vue'),
+          meta: { title: '公告管理' },
+        },
+        {
+          path: 'books',
+          name: 'AdminBooks',
+          component: () => import('../views/admin/Books.vue'),
+          meta: { title: '书籍管理' },
+        },
+        {
+          path: 'review',
+          name: 'AdminReview',
+          component: () => import('../views/admin/ReviewList.vue'),
+          meta: { title: '新书审核' },
+        },
+        {
+          path: 'categories',
+          name: 'AdminCategories',
+          component: () => import('../views/admin/Categories.vue'),
+          meta: { title: '分类管理' },
+        },
+      ],
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
       component: () => import('../views/NotFound.vue'),
@@ -91,6 +146,23 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   if (to.meta.requiresAuth && !localStorage.getItem('user')) {
     next({ name: 'Login' })
+  } else if (to.meta.requiresAdmin) {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      next({ name: 'Login' })
+      return
+    }
+    try {
+      const user = JSON.parse(userStr)
+      if (!user.is_staff) {
+        next({ name: 'Home' })
+        return
+      }
+    } catch {
+      next({ name: 'Login' })
+      return
+    }
+    next()
   } else {
     next()
   }

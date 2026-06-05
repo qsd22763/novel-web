@@ -36,11 +36,11 @@ COVER_DIR = os.path.join(BASE_DIR, 'media', 'covers')
 
 CAT_MAP = {
     '/xuanhuanxiaoshuo/': ('玄幻', 1),
-    '/xiuzhenxiaoshuo/': ('玄幻', 1),
+    '/xiuzhenxiaoshuo/': ('修真', 1),
     '/dushixiaoshuo/': ('都市', 2),
     '/chuanyuexiaoshuo/': ('穿越', 3),
-    '/wangyouxiaoshuo/': ('游戏', 5),
-    '/kehuanxiaoshuo/': ('科幻', 4),
+    '/wangyouxiaoshuo/': ('游戏', 4),
+    '/kehuanxiaoshuo/': ('科幻', 5),
     '/wuxiaxiaoshuo/': ('武侠', 6),
     '/xuanyixiaoshuo/': ('悬疑', 7),
     '/lishixiaoshuo/': ('历史', 8),
@@ -141,14 +141,14 @@ class XbiqugeCrawler:
 
     CAT_ID_MAP = {
         '/xuanhuanxiaoshuo/': '1',
-        '/xiuzhenxiaoshuo/': '2',
+        '/xiuzhenxiaoshuo/': '1',
         '/dushixiaoshuo/': '3',
         '/chuanyuexiaoshuo/': '4',
         '/wangyouxiaoshuo/': '5',
         '/kehuanxiaoshuo/': '6',
         '/wuxiaxiaoshuo/': '7',
-        '/xuanyixiaoshuo/': '8',
-        '/lishixiaoshuo/': '9',
+        '/xuanyixiaoshuo/': '1',
+        '/lishixiaoshuo/': '2',
     }
 
     def get_book_list(self, cat_url, max_pages=3):
@@ -231,7 +231,7 @@ class XbiqugeCrawler:
                     'url': ch_href,
                     'order': idx + 1,
                 })
-                if len(chapters) >= 50:
+                if len(chapters) >= 10:
                     break
 
         wc_match = re.search(r'(\d+)', ''.join(html.xpath("//div[@id='info']//p[contains(.,'字')]//text()")))
@@ -361,7 +361,7 @@ def main():
     parser.add_argument('--cats', type=int, default=3)
     parser.add_argument('--books', type=int, default=3)
     parser.add_argument('--pages', type=int, default=2)
-    parser.add_argument('--max-chapters', type=int, default=50, help='Max chapters per book (default 50)')
+    parser.add_argument('--max-chapters', type=int, default=10, help='Max chapters per book (default 10)')
     args = parser.parse_args()
 
     crawler = XbiqugeCrawler()

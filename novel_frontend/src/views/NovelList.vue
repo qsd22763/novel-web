@@ -24,7 +24,8 @@
           </template>
           <template v-else>
             <router-link to="/user" class="user-avatar">
-              <el-icon :size="18"><User /></el-icon>
+              <img v-if="userAvatar" :src="userAvatar" alt="头像" class="user-avatar-img" />
+              <el-icon v-else :size="18"><User /></el-icon>
             </router-link>
           </template>
         </div>
@@ -284,6 +285,7 @@ const filterStatus = ref('')
 const filterWordCount = ref('')
 
 const isLoggedIn = computed(() => !!localStorage.getItem('user'))
+const userAvatar = ref('')
 
 interface Category {
   name: string
@@ -431,6 +433,10 @@ onMounted(() => {
   loadNovels()
   loadTopNovels()
   loadCategoryStats()
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    userAvatar.value = user.avatar || ''
+  } catch {}
 })
 
 watch(() => route.query.category, (newCat) => {
@@ -572,6 +578,13 @@ watch(() => route.query.category, (newCat) => {
 .user-avatar:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 /* ========== PAGE HEAD ========== */

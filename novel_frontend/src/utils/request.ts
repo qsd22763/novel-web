@@ -5,12 +5,13 @@ interface RequestInstance {
   get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>
   post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
   put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
+  patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>
   delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>
 }
 
 const instance = axios.create({
   baseURL: '/api',
-  timeout: 10000,
+  timeout: 30000,
   withCredentials: true,
 })
 
@@ -25,6 +26,11 @@ instance.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const status = error.response?.status
+    const code = error.code
+    // 超时/网络中断特殊处理
+    if (code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      console.error('[Timeout] 请求超时:', error.config?.url)
+    }
     if (status === 401 || status === 403) {
       const url = error.config?.url || ''
       const isAuthApi = /favorites|reading-progress|bookmarks|author|auth\/me|comments/.test(url)

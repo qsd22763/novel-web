@@ -10,7 +10,11 @@
           <router-link to="/user" class="active">个人中心</router-link>
         </nav>
         <div class="uc-header__actions">
-          <span class="uc-header__user">{{ userInfo.username }}</span>
+          <span class="uc-header__user">
+            <img v-if="userInfo.avatar" :src="userInfo.avatar" :alt="userInfo.username" class="uc-header__avatar" />
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {{ userInfo.username }}
+          </span>
           <button class="uc-header__logout" @click="handleLogout">退出</button>
         </div>
       </div>
@@ -60,8 +64,8 @@
             v-for="tab in tabList"
             :key="tab.name"
             class="uc-sidenav__item"
-            :class="{ active: activeTab === tab.name }"
-            @click="activeTab = tab.name"
+            :class="{ active: !tab.isLink && activeTab === tab.name }"
+            @click="tab.isLink ? router.push(tab.linkTo) : (activeTab = tab.name)"
           >
             <span class="uc-sidenav__icon" v-html="tab.svg"></span>
             <span class="uc-sidenav__label">{{ tab.label }}</span>
@@ -276,7 +280,30 @@
           <el-input v-model="editForm.username" placeholder="输入用户名" />
         </el-form-item>
         <el-form-item label="头像">
-          <el-input v-model="editForm.avatar" placeholder="输入头像 URL" />
+          <div class="uc-avatar-upload">
+            <el-upload
+              class="uc-avatar-uploader"
+              :show-file-list="false"
+              :auto-upload="false"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              :on-change="handleAvatarChange"
+              :before-upload="beforeAvatarUpload"
+            >
+              <div v-if="editForm.avatar" class="uc-avatar-preview">
+                <img :src="editForm.avatar" alt="头像预览" />
+                <div class="uc-avatar-overlay">
+                  <span>更换</span>
+                </div>
+              </div>
+              <div v-else class="uc-avatar-trigger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>上传头像</span>
+              </div>
+            </el-upload>
+            <div class="uc-avatar-hint">
+              支持 JPG、PNG、GIF、WebP 格式，建议尺寸 200x200 像素以内，不超过 2MB
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="邮　箱">
           <el-input v-model="editForm.email" placeholder="输入邮箱" />
@@ -337,6 +364,8 @@ const editForm = ref({
   email: '',
   phone: ''
 })
+const avatarFile = ref<File | null>(null)
+const originalAvatar = ref('')
 const pwdDialogVisible = ref(false)
 const pwdForm = ref({
   old_password: '',
@@ -349,6 +378,8 @@ const tabList = [
   { name: 'favorites', label: '我的书架', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' },
   { name: 'history', label: '阅读记录', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>' },
   { name: 'bookmarks', label: '我的书签', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>' },
+  { name: 'signin', label: '每日签到', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>', isLink: true, linkTo: '/user/signin' },
+  { name: 'recharge', label: '会员充值', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>', isLink: true, linkTo: '/user/recharge' },
 ]
 
 const showEditDialog = () => {
@@ -358,12 +389,61 @@ const showEditDialog = () => {
     email: userInfo.value.email || '',
     phone: userInfo.value.phone || ''
   }
+  originalAvatar.value = userInfo.value.avatar || ''
+  avatarFile.value = null
   editDialogVisible.value = true
+}
+
+const beforeAvatarUpload = (rawFile: File) => {
+  const isImage = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(rawFile.type)
+  const isLt2M = rawFile.size / 1024 / 1024 < 2
+  if (!isImage) {
+    ElMessage.error('头像只能是 JPG、PNG、GIF 或 WebP 格式!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('头像大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+const handleAvatarChange = (uploadFile: any) => {
+  const rawFile = uploadFile.raw
+  if (!beforeAvatarUpload(rawFile)) return
+  avatarFile.value = rawFile
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    editForm.value.avatar = e.target?.result as string
+  }
+  reader.readAsDataURL(rawFile)
 }
 
 const handleUpdateProfile = async () => {
   try {
-    await request.put('/auth/update_profile/', editForm.value)
+    let avatarUrl = originalAvatar.value
+    if (avatarFile.value) {
+      const formData = new FormData()
+      formData.append('file', avatarFile.value)
+      try {
+        const res: any = await request.post('/author/novels/upload_cover/', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        avatarUrl = res.url || ''
+        if (!avatarUrl) throw new Error('未返回URL')
+      } catch (uploadErr) {
+        console.warn('头像上传失败:', uploadErr)
+        ElMessage.error('头像上传失败，请稍后重试')
+        return
+      }
+    }
+    const submitData = {
+      username: editForm.value.username,
+      email: editForm.value.email,
+      phone: editForm.value.phone,
+      avatar: avatarUrl
+    }
+    await request.put('/auth/update_profile/', submitData)
     ElMessage.success('更新成功')
     editDialogVisible.value = false
     loadUserInfo()
@@ -653,6 +733,17 @@ onMounted(() => {
 .uc-header__user {
   color: #D1D5DB;
   font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.uc-header__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(202, 138, 4, 0.5);
 }
 
 .uc-header__logout {
@@ -1466,6 +1557,88 @@ onMounted(() => {
 
 .uc-dialog__form :deep(.el-input__wrapper:focus-within) {
   border-color: var(--accent);
+}
+
+.uc-avatar-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.uc-avatar-uploader :deep(.el-upload) {
+  border: 2px dashed var(--border);
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s, background-color 0.25s;
+}
+
+.uc-avatar-uploader :deep(.el-upload:hover) {
+  border-color: var(--accent);
+  background: #FFFBF0;
+}
+
+.uc-avatar-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.uc-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.uc-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s;
+  border-radius: 50%;
+}
+
+.uc-avatar-preview:hover .uc-avatar-overlay {
+  opacity: 1;
+}
+
+.uc-avatar-overlay span {
+  color: #fff;
+  font-size: 0.82rem;
+  font-family: 'Noto Sans SC', sans-serif;
+  letter-spacing: 1px;
+}
+
+.uc-avatar-trigger {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.uc-avatar-trigger span {
+  font-size: 0.75rem;
+  font-family: 'Noto Sans SC', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.uc-avatar-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.4;
+  padding-left: 0.25rem;
 }
 
 .uc-dialog__footer {

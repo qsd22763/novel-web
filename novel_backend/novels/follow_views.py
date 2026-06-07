@@ -118,17 +118,18 @@ class FollowViewSet(viewsets.ViewSet):
 
         paginator = FollowPagination()
         page = paginator.paginate_queryset(qs, request)
+        _safe_username = lambda f: getattr(f.user, 'username', '(已注销)') if f.user else '(已注销)'
         if page is not None:
             items = [{
                 'id': f.id,
-                'username': f.user.username,
+                'username': _safe_username(f),
                 'author_name': f.author_name,
                 'created_at': f.created_at.strftime('%Y-%m-%d %H:%M:%S') if f.created_at else '',
             } for f in page]
             return paginator.get_paginated_response(items)
         items = [{
             'id': f.id,
-            'username': f.user.username,
+            'username': _safe_username(f),
             'author_name': f.author_name,
             'created_at': f.created_at.strftime('%Y-%m-%d %H:%M:%S') if f.created_at else '',
         } for f in qs]

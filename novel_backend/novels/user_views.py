@@ -20,7 +20,6 @@ from .user_serializers import (
 )
 from .oauth_utils import (
     get_qq_auth_url, get_qq_access_token, get_qq_openid, get_qq_userinfo,
-    get_wechat_auth_url, get_wechat_access_token, get_wechat_userinfo,
 )
 
 
@@ -212,58 +211,6 @@ class AuthViewSet(viewsets.ViewSet):
             return Response({'error': f'QQ登录异常: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
-    def wechat_login(self, request):
-        """微信OAuth扫码登录"""
-        code = request.query_params.get('code')
-        state = request.query_params.get('state', '')
-
-        if not code:
-            auth_url = get_wechat_auth_url(state=state)
-            return Response({'auth_url': auth_url})
-
-        try:
-            token_data = get_wechat_access_token(code)
-            access_token = token_data.get('access_token', '')
-            openid = token_data.get('openid', '')
-            errcode = token_data.get('errcode')
-
-            if errcode:
-                return Response({'error': f'微信授权失败: {token_data.get("errmsg", "")}'}, status=status.HTTP_400_BAD_REQUEST)
-            if not access_token or not openid:
-                return Response({'error': '微信授权失败，未获取到access_token或openid'}, status=status.HTTP_400_BAD_REQUEST)
-
-            user = User.objects.filter(wechat_openid=openid).first()
-            if user:
-                login(request, user)
-                token, _ = Token.objects.get_or_create(user=user)
-                return Response({
-                    'message': '微信登录成功',
-                    'token': token.key,
-                    'user': UserSerializer(user).data
-                })
-
-            userinfo = get_wechat_userinfo(access_token, openid)
-            nickname = userinfo.get('nickname', '')
-            avatar_url = userinfo.get('headimgurl', '')
-            username = nickname or f'wx_{openid[:8]}'
-
-            user = User.objects.create(
-                username=username,
-                avatar=avatar_url,
-                wechat_openid=openid,
-            )
-            login(request, user)
-            token = Token.objects.create(user=user)
-            return Response({
-                'message': '微信注册并登录成功',
-                'token': token.key,
-                'user': UserSerializer(user).data
-            }, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            return Response({'error': f'微信登录异常: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    @action(detail=False, methods=['get'])
     def oauth_callback(self, request):
         """OAuth统一回调入口"""
         provider = request.query_params.get('provider', '')
@@ -296,35 +243,6 @@ class AuthViewSet(viewsets.ViewSet):
                         username=nickname or f'qq_{openid[:8]}',
                         avatar=avatar_url,
                         qq_openid=openid,
-                    )
-
-                login(request, user)
-                token, _ = Token.objects.get_or_create(user=user)
-                from urllib.parse import urlencode
-                return redirect(f'/login?{urlencode({"token": token.key})}')
-
-            elif provider == 'wechat':
-                if not code:
-                    url = get_wechat_auth_url(state=state)
-                    return redirect(url)
-
-                token_data = get_wechat_access_token(code)
-                access_token = token_data.get('access_token', '')
-                openid = token_data.get('openid', '')
-
-                if not access_token or not openid:
-                    from urllib.parse import urlencode
-                    return redirect(f'/login?{urlencode({"error": "微信授权失败"})}')
-
-                user = User.objects.filter(wechat_openid=openid).first()
-                if not user:
-                    userinfo = get_wechat_userinfo(access_token, openid)
-                    nickname = userinfo.get('nickname', '')
-                    avatar_url = userinfo.get('headimgurl', '')
-                    user = User.objects.create(
-                        username=nickname or f'wx_{openid[:8]}',
-                        avatar=avatar_url,
-                        wechat_openid=openid,
                     )
 
                 login(request, user)

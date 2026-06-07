@@ -4,8 +4,6 @@ import requests
 
 QQ_APP_ID = os.environ.get('QQ_APP_ID', '')
 QQ_APP_SECRET = os.environ.get('QQ_APP_SECRET', '')
-WECHAT_APP_ID = os.environ.get('WECHAT_APP_ID', '')
-WECHAT_APP_SECRET = os.environ.get('WECHAT_APP_SECRET', '')
 OAUTH_REDIRECT_URI = os.environ.get('OAUTH_REDIRECT_URI', 'http://localhost:5173/login')
 OAUTH_CALLBACK_URL = os.environ.get('OAUTH_CALLBACK_URL', 'http://localhost:8000/api/auth/oauth_callback/')
 
@@ -72,45 +70,3 @@ def get_qq_userinfo(access_token, openid):
         return resp.json()
     except requests.RequestException as e:
         raise Exception(f'QQ获取用户信息失败: {str(e)}')
-
-
-# ==================== 微信OAuth ====================
-
-def get_wechat_auth_url(redirect_uri=None, state=''):
-    """构造微信扫码授权URL"""
-    if redirect_uri is None:
-        redirect_uri = OAUTH_REDIRECT_URI
-    return (
-        f'https://open.weixin.qq.com/connect/qrconnect'
-        f'?appid={WECHAT_APP_ID}&redirect_uri={redirect_uri}'
-        f'&response_type=code&scope=snsapi_login&state={state}#wechat_redirect'
-    )
-
-
-def get_wechat_access_token(code):
-    """用授权码换取微信access_token"""
-    url = (
-        f'https://api.weixin.qq.com/sns/oauth2/access_token'
-        f'?appid={WECHAT_APP_ID}&secret={WECHAT_APP_SECRET}'
-        f'&code={code}&grant_type=authorization_code'
-    )
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-        return resp.json()
-    except requests.RequestException as e:
-        raise Exception(f'微信获取access_token失败: {str(e)}')
-
-
-def get_wechat_userinfo(access_token, openid):
-    """获取微信用户信息"""
-    url = (
-        f'https://api.weixin.qq.com/sns/userinfo'
-        f'?access_token={access_token}&openid={openid}&lang=zh_CN'
-    )
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-        return resp.json()
-    except requests.RequestException as e:
-        raise Exception(f'微信获取用户信息失败: {str(e)}')

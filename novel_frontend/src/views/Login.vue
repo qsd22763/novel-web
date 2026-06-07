@@ -176,13 +176,6 @@
         </div>
 
         <div class="lp-social">
-          <!-- 微信扫码登录 -->
-          <button class="lp-social__btn lp-social__btn--wechat" title="微信登录" @click.prevent="handleWechatLogin">
-            <svg class="lp-icon-wechat" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-              <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.295.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.37 10.37 0 002.832.403c.276 0 .543-.027.811-.063-.171-.503-.264-1.03-.264-1.574 0-3.614 3.093-6.54 6.91-6.54.36 0 .713.028 1.063.07C16.29 4.688 12.893 2.188 8.691 2.188zm-2.78 4.43c.58 0 1.05.468 1.05 1.045s-.47 1.045-1.05 1.045-1.05-.468-1.05-1.045.47-1.045 1.05-1.045zm5.56 0c.58 0 1.05.468 1.05 1.045s-.47 1.045-1.05 1.045-1.05-.468-1.05-1.045.47-1.045 1.05-1.05z"/>
-              <path d="M23.996 14.867c0-3.382-3.23-6.126-7.215-6.126S9.566 11.485 9.566 14.867c0 3.382 3.23 6.126 7.215 6.126a8.35 8.35 0 002.34-.334.694.694 0 01.592.079l1.574.92a.275.275 0 00.138.045c.134 0 .244-.108.244-.243 0-.06-.024-.119-.039-.177l-.322-1.223a49.3 49.3 0 01.176-.549c1.512-1.224 2.512-3.079 2.512-5.144zM10.365 15.08c-.48 0-.87-.387-.87-.864s.39-.864.87-.864.87.387.87.864-.39.864-.87.864zm4.632 0c-.48 0-.87-.387-.87-.864s.39-.864.87-.864.87.387.87.864-.39.864-.87.864z"/>
-            </svg>
-          </button>
           <!-- QQ 登录 -->
           <button class="lp-social__btn lp-social__btn--qq" title="QQ登录" @click.prevent="handleQQLogin">
             <svg class="lp-icon-qq" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
@@ -197,37 +190,7 @@
           </button>
         </div>
 
-        <!-- 微信二维码弹窗 -->
-        <Teleport to="body">
-          <Transition name="lp-qrcode-fade">
-            <div v-if="showWechatQR" class="lp-qrcode-overlay" @click.self="showWechatQR = false">
-              <div class="lp-qrcode-dialog">
-                <div class="lp-qrcode-dialog__header">
-                  <span class="lp-qrcode-dialog__title">微信扫码登录</span>
-                  <button class="lp-qrcode-dialog__close" @click="showWechatQR = false">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-                <div class="lp-qrcode-body">
-                  <div v-if="wechatLoading" class="lp-qrcode-loading">
-                    <div class="lp-qrcode-loading__spinner"></div>
-                    <p>正在生成二维码...</p>
-                  </div>
-                  <div v-else-if="wechatQRUrl" class="lp-qrcode-img-wrap">
-                    <img :src="wechatQRUrl" alt="微信扫码" class="lp-qrcode-img" />
-                    <p class="lp-qrcode-tip">请使用微信扫一扫登录</p>
-                  </div>
-                  <div v-else class="lp-qrcode-error">
-                    <p>二维码加载失败</p>
-                    <button class="lp-qrcode-retry" @click="handleWechatLogin">重试</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </Teleport>
-      </div>
-    </main>
+      </main>
   </div>
 </template>
 
@@ -250,11 +213,6 @@ const formRef = ref()
 const isCountingDown = ref(false)
 const countdown = ref(60)
 let timer: ReturnType<typeof setInterval> | null = null
-
-// 微信扫码弹窗
-const showWechatQR = ref(false)
-const wechatLoading = ref(false)
-const wechatQRUrl = ref('')
 
 const form = reactive({
   username: '',
@@ -364,28 +322,6 @@ const handleQQLogin = async () => {
   }
 }
 
-// ── 微信登录：弹窗展示二维码 ──
-const handleWechatLogin = async () => {
-  showWechatQR.value = true
-  wechatLoading.value = true
-  wechatQRUrl.value = ''
-
-  try {
-    // 获取微信授权URL（含二维码参数）
-    const res: any = await authApi.wechatLogin('', 'login_qr')
-    if (res?.auth_url) {
-      // 使用二维码API生成图片
-      wechatQRUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(res.auth_url)}`
-    } else {
-      wechatQRUrl.value = ''
-    }
-  } catch {
-    wechatQRUrl.value = ''
-  } finally {
-    wechatLoading.value = false
-  }
-}
-
 // ── 页面加载时检测OAuth回调 ──
 const handleOAuthCallback = async () => {
   const code = route.query.code as string
@@ -395,12 +331,8 @@ const handleOAuthCallback = async () => {
 
   try {
     let res: any
-    if (provider === 'wechat' || route.query.state === 'wechat_login') {
-      res = await authApi.wechatLogin(code)
-    } else {
-      // 默认走 QQ 回调
-      res = await authApi.qqCallback(code, provider)
-    }
+    // 默认走 QQ 回调
+    res = await authApi.qqCallback(code, provider)
 
     if (res?.token) {
       localStorage.setItem('auth_token', res.token)
@@ -1191,185 +1123,14 @@ const handleSubmit = async () => {
 }
 
 /* ══════════════════════════════════════════════
-   5c. 第三方登录 — QQ/微信图标专属样式
+   5c. 第三方登录 — QQ 图标专属样式
    ══════════════════════════════════════════════ */
-.lp-icon-wechat {
-  color: #07C160;
-}
-
 .lp-icon-qq {
   color: #12B7F5;
 }
 
-.lp-social__btn--wechat:hover .lp-icon-wechat {
-  filter: drop-shadow(0 0 6px rgba(7, 193, 96, 0.4));
-}
-
 .lp-social__btn--qq:hover .lp-icon-qq {
   filter: drop-shadow(0 0 6px rgba(18, 183, 245, 0.4));
-}
-
-/* ══════════════════════════════════════════════
-   6. 微信二维码弹窗
-   ══════════════════════════════════════════════ */
-.lp-qrcode-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(26, 21, 17, 0.55);
-  backdrop-filter: blur(4px);
-}
-
-.lp-qrcode-dialog {
-  width: 320px;
-  background: var(--rice-pale);
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow:
-    0 20px 60px rgba(26, 21, 17, 0.3),
-    0 8px 24px rgba(26, 21, 17, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(201, 160, 74, 0.15);
-}
-
-.lp-qrcode-dialog__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.lp-qrcode-dialog__title {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--ink-mid);
-  letter-spacing: 0.04em;
-}
-
-.lp-qrcode-dialog__close {
-  cursor: pointer;
-  color: var(--brown-soft);
-  transition: color 0.2s ease;
-  padding: 2px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-}
-
-.lp-qrcode-dialog__close:hover {
-  color: var(--ink-mid);
-  background: rgba(82, 68, 56, 0.06);
-}
-
-.lp-qrcode-body {
-  padding: 28px 24px 32px;
-  text-align: center;
-}
-
-/* 加载态 */
-.lp-qrcode-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-
-.lp-qrcode-loading p {
-  font-size: 0.85rem;
-  color: var(--brown-soft);
-  margin: 0;
-}
-
-.lp-qrcode-loading__spinner {
-  width: 36px;
-  height: 36px;
-  border: 2.5px solid var(--border);
-  border-top-color: var(--gold-main);
-  border-radius: 50%;
-  animation: lp-spin 0.7s linear infinite;
-}
-
-/* 二维码图片 */
-.lp-qrcode-img-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.lp-qrcode-img {
-  width: 180px;
-  height: 180px;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
-  padding: 8px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(82, 68, 56, 0.08);
-}
-
-.lp-qrcode-tip {
-  font-size: 0.82rem;
-  color: var(--brown-soft);
-  margin: 0;
-  letter-spacing: 0.03em;
-}
-
-/* 错误态 */
-.lp-qrcode-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.lp-qrcode-error p {
-  font-size: 0.85rem;
-  color: var(--brown-soft);
-  margin: 0;
-}
-
-.lp-qrcode-retry {
-  padding: 6px 18px;
-  font-family: 'Noto Sans SC', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--gold-main);
-  background: transparent;
-  border: 1.5px solid var(--gold-main);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.lp-qrcode-retry:hover {
-  background: var(--gold-glow);
-  transform: translateY(-1px);
-}
-
-/* 弹窗过渡动画 */
-.lp-qrcode-fade-enter-active,
-.lp-qrcode-fade-leave-active {
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.lp-qrcode-fade-enter-active .lp-qrcode-dialog,
-.lp-qrcode-fade-leave-active .lp-qrcode-dialog {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.lp-qrcode-fade-enter-from,
-.lp-qrcode-fade-leave-to {
-  opacity: 0;
-}
-
-.lp-qrcode-fade-enter-from .lp-qrcode-dialog,
-.lp-qrcode-fade-leave-to .lp-qrcode-dialog {
-  transform: scale(0.9) translateY(16px);
 }
 
 /* ══════════════════════════════════════════════
@@ -1718,9 +1479,7 @@ const handleSubmit = async () => {
   .lp-code__btn,
   .lp-card,
   .lp-forgot,
-  .lp-toggle,
-  .lp-qrcode-dialog,
-  .lp-qrcode-loading__spinner {
+  .lp-toggle {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }

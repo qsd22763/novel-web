@@ -90,7 +90,6 @@ class User(AbstractUser):
     bio = models.CharField(max_length=200, blank=True, default='', verbose_name='作者简介')
     coins = models.IntegerField(default=0, verbose_name='虚拟币余额')
     qq_openid = models.CharField(max_length=64, blank=True, default='', verbose_name='QQ OpenID', db_index=True)
-    wechat_openid = models.CharField(max_length=64, blank=True, default='', verbose_name='微信OpenID', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='注册时间')
 
     class Meta:

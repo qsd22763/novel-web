@@ -94,10 +94,7 @@ export const authApi = {
   qqCallback: (code: string, state?: string) =>
     request.get('/auth/qq_login/', { params: { code, state } }),
 
-  wechatLogin: (code: string, state?: string) =>
-    request.get('/auth/wechat_login/', { params: { code, state } }),
-
-  oauthCallback: (provider: 'qq' | 'wechat', code: string, state?: string) =>
+  oauthCallback: (provider: 'qq', code: string, state?: string) =>
     request.get('/auth/oauth_callback/', { params: { provider, code, state } }),
 }
 

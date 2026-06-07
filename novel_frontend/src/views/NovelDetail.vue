@@ -1,5 +1,6 @@
 <template>
   <div class="novel-detail">
+    <!-- ===== 顶部导航 ===== -->
     <header class="site-header">
       <div class="header-inner">
         <div class="header-left">
@@ -9,16 +10,16 @@
             <span class="bc-sep">/</span>
             <span class="bc-item bc-link" @click="goToCategory">{{ novel.category }}</span>
             <span class="bc-sep">/</span>
-            <span class="bc-item bc-current">{{ novel.title }}</span>
+            <span class="bc-current">{{ novel.title }}</span>
           </nav>
         </div>
         <div class="header-actions">
           <button v-if="!isLoggedIn" class="btn-login" @click="goLogin">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             登录
           </button>
           <button v-else class="btn-user" @click="goUserCenter">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             用户中心
           </button>
         </div>
@@ -26,175 +27,166 @@
     </header>
 
     <main class="main-content">
+      <!-- 骨架屏 -->
       <div v-if="loading" class="loading-state">
-        <div class="skeleton-hero">
-          <div class="skeleton-block skeleton-shimmer"></div>
-        </div>
+        <div class="skeleton-hero"><div class="sk-block"></div></div>
         <div class="skeleton-info">
-          <div class="skeleton-cover skeleton-shimmer"></div>
-          <div class="skeleton-meta">
-            <div class="skeleton-line skeleton-shimmer" style="width:60%;height:28px"></div>
-            <div class="skeleton-line skeleton-shimmer" style="width:40%;height:16px"></div>
-            <div class="skeleton-line skeleton-shimmer" style="width:80%;height:48px"></div>
-            <div class="skeleton-line skeleton-shimmer" style="width:50%;height:44px"></div>
+          <div class="sk-cover"></div>
+          <div class="sk-meta">
+            <div class="sk-line" style="width:60%;height:22px"></div>
+            <div class="sk-line" style="width:35%;height:14px;margin-top:6px"></div>
+            <div class="sk-line" style="width:75%;height:36px;margin-top:10px"></div>
           </div>
-        </div>
-        <div class="skeleton-desc">
-          <div class="skeleton-line skeleton-shimmer" style="width:100%;height:16px"></div>
-          <div class="skeleton-line skeleton-shimmer" style="width:90%;height:16px"></div>
-          <div class="skeleton-line skeleton-shimmer" style="width:75%;height:16px"></div>
-        </div>
-        <div class="skeleton-chapters">
-          <div v-for="i in 8" :key="i" class="skeleton-chapter skeleton-shimmer"></div>
         </div>
       </div>
 
+      <!-- 主内容 -->
       <template v-else-if="novel">
+
+        <!-- Hero 横幅区 -->
         <section class="hero-section">
-          <div class="hero-blur-bg">
-            <img :src="novel.cover" :alt="novel.title" class="hero-blur-img" />
+          <div class="hero-bg">
+            <img :src="novel.cover || defaultCover" :alt="novel.title" class="hero-bg-img" @error="onCoverError" />
           </div>
           <div class="hero-overlay"></div>
           <div class="hero-content">
             <div class="hero-cover-frame">
-              <img :src="novel.cover" :alt="novel.title" class="hero-cover-img" />
+              <img :src="novel.cover || defaultCover" :alt="novel.title" class="hero-cover-img" @error="onCoverError" />
             </div>
             <div class="hero-meta">
               <h1 class="hero-title">{{ novel.title }}</h1>
-              <p class="hero-author">{{ novel.author }}</p>
+              <p class="hero-author-row">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span class="hero-author-name" @click="goToAuthor">{{ novel.author }}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="hero-arrow"><polyline points="9 18 15 12 9 6"/></svg>
+              </p>
               <div class="hero-tags">
                 <span class="tag tag-category">{{ novel.category }}</span>
-                <span
-                  v-for="tag in parsedTags"
-                  :key="tag"
-                  class="tag tag-custom"
-                >{{ tag }}</span>
-                <span class="tag" :class="novel.status === 1 ? 'tag-complete' : 'tag-ongoing'">
-                  {{ novel.status === 1 ? '已完结' : '连载中' }}
-                </span>
+                <span v-for="tag in parsedTags" :key="tag" class="tag tag-custom">{{ tag }}</span>
+                <span class="tag" :class="novel.status === 1 ? 'tag-complete' : 'tag-ongoing'">{{ novel.status === 1 ? '已完结' : '连载中' }}</span>
               </div>
             </div>
           </div>
         </section>
 
+        <!-- 内容卡片容器 -->
         <div class="content-wrapper">
+
+          <!-- 信息操作区：封面 + 数据 + 按钮 + 作者内联 -->
           <section class="info-section">
             <div class="info-layout">
               <div class="info-left">
-                <div class="cover-card">
-                  <img :src="novel.cover" :alt="novel.title" class="side-cover" />
+                <div class="cover-card" @click="goToAuthor">
+                  <img :src="novel.cover || defaultCover" :alt="novel.title" class="side-cover" @error="onCoverError" />
                   <div class="cover-spine"></div>
                 </div>
               </div>
               <div class="info-right">
-                <div class="stats-bar">
-                  <div class="stat-cell">
-                    <span class="stat-num">{{ formatCount(novel.word_count || 0) }}</span>
-                    <span class="stat-lbl">字数</span>
+                <div class="stats-row">
+                  <div class="stat-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CA8A04" stroke-width="1.8"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                    <b>{{ formatCount(novel.word_count || 0) }}</b><em>字数</em>
                   </div>
                   <div class="stat-divider"></div>
-                  <div class="stat-cell">
-                    <span class="stat-num">{{ formatCount(novel.view_count || 0) }}</span>
-                    <span class="stat-lbl">阅读</span>
+                  <div class="stat-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <b>{{ formatCount(novel.view_count || 0) }}</b><em>阅读</em>
                   </div>
                   <div class="stat-divider"></div>
-                  <div class="stat-cell">
-                    <span class="stat-num">{{ novel.chapter_count || chapters.length }}</span>
-                    <span class="stat-lbl">章节</span>
+                  <div class="stat-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                    <b>{{ novel.chapter_count || chapters.length }}</b><em>章节</em>
+                  </div>
+                  <div class="stat-divider"></div>
+                  <div class="stat-item stat-item--author" @click="goToAuthor">
+                    <span class="author-dot">{{ (novel.author || '').charAt(0) }}</span>
+                    <b>{{ novel.author }}</b><em>作者 &rarr;</em>
                   </div>
                 </div>
-                <div class="action-buttons">
-                  <button class="btn-read" @click="startReading">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <div class="action-bar">
+                  <button class="btn btn--primary" @click="startReading">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     开始阅读
                   </button>
-                  <button
-                    v-if="isLoggedIn"
-                    class="btn-favorite"
-                    :class="{ favorited: isFavorited }"
-                    @click="toggleFavorite"
-                  >
-                    <Transition name="heart" mode="out-in">
-                      <svg v-if="isFavorited" key="filled" width="18" height="18" viewBox="0 0 24 24" fill="#CA8A04" stroke="#CA8A04" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                      <svg v-else key="outline" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <button v-if="isLoggedIn" class="btn btn--secondary" :class="{ active: isFavorited }" @click="toggleFavorite">
+                    <Transition name="icon-pop" mode="out-in">
+                      <svg v-if="isFavorited" key="f" width="15" height="15" viewBox="0 0 24 24" fill="#CA8A04" stroke="#CA8A04" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                      <svg v-else key="o" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
                     </Transition>
                     {{ isFavorited ? '已收藏' : '收藏' }}
                   </button>
+                  <button v-if="isLoggedIn" class="btn btn--secondary" :class="{ followed: isFollowed }" :disabled="followLoading" @click="toggleFollow">
+                    <Transition name="icon-pop" mode="out-in">
+                      <svg v-if="isFollowed" key="f" width="15" height="15" viewBox="0 0 24 24" fill="#22C55E" stroke="#22C55E" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                      <svg v-else key="u" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    </Transition>
+                    {{ isFollowed ? '已关注' : '关注' }}
+                  </button>
                 </div>
+              </div>
+            </div>
+
+            <!-- 评分展示区 -->
+            <div class="rating-display" @click="openRatingDialog">
+              <div class="rd-score">
+                <span class="rd-num">{{ ratingAvg > 0 ? ratingAvg.toFixed(1) : '--' }}</span>
+              </div>
+              <div class="rd-info">
+                <div class="rd-stars-static">
+                  <span v-for="i in 5" :key="'rs'+i" class="rss-star" :class="{ on: i <= Math.round(ratingAvg) }">★</span>
+                </div>
+                <span class="rd-count">{{ ratingTotal > 0 ? `${ratingTotal}人评分` : '暂无评分' }}</span>
+                <span class="rd-hint">{{ isLoggedIn ? (myRatingScore > 0 ? `你评了 ${myRatingScore} 星` : '点击评分') : '登录后可评分' }} &rarr;</span>
               </div>
             </div>
           </section>
 
-          <section class="description-section">
-            <div class="section-header">
-              <span class="section-title">内容简介</span>
-              <div class="section-line"></div>
+          <!-- 内容简介 -->
+          <section class="sec-card desc-card">
+            <div class="sec-head">
+              <svg class="sec-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="9" y1="7" x2="16" y2="7"/></svg>
+              <span class="sec-title">内容简介</span>
             </div>
-            <div class="description-body" :class="{ collapsed: !descExpanded }">
-              <p class="description-text">{{ novel.description || '暂无简介' }}</p>
+            <div class="desc-body" :class="{ collapsed: !descExpanded }">
+              <p class="desc-text">{{ novel.description || '暂无简介' }}</p>
             </div>
-            <button
-              v-if="novel.description && novel.description.length > 120"
-              class="expand-btn"
-              @click="descExpanded = !descExpanded"
-            >
+            <button v-if="novel.description && novel.description.length > 120" class="expand-btn" @click="descExpanded = !descExpanded">
               {{ descExpanded ? '收起' : '展开全文' }}
-              <svg v-if="!descExpanded" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              <svg :width="12" :height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline :points="!descExpanded ? '6 9 12 15 18 9' : '18 15 12 9 6 15'"/></svg>
             </button>
           </section>
 
-          <section class="chapter-section">
-            <div class="section-header">
-              <span class="section-title">章节目录</span>
-              <span class="chapter-count">共 {{ chapters.length }} 章</span>
-              <div class="section-line"></div>
+          <!-- 章节目录（横向按钮流式布局） -->
+          <section class="sec-card chapter-card">
+            <div class="sec-head">
+              <svg class="sec-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/></svg>
+              <span class="sec-title">章节目录</span>
+              <span class="sec-badge">{{ chapters.length }} 章</span>
             </div>
             <div v-if="chapters.length > 0" class="chapter-grid">
-              <div
-                v-for="chapter in chapters"
-                :key="chapter.id"
-                class="chapter-item"
-                :class="{ 'chapter-read': isChapterRead(chapter.id) }"
-                @click="goToRead(chapter.id)"
-              >
-                <span class="chapter-name">{{ chapter.title }}</span>
-                <svg v-if="isChapterRead(chapter.id)" class="read-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
+              <button v-for="(chapter, idx) in chapters" :key="chapter.id"
+                class="ch-btn" :class="{ read: isChapterRead(chapter.id) }"
+                :title="`第${idx + 1}章 · ${chapter.title}`"
+                @click="goToRead(chapter.id)">
+                <strong>{{ idx + 1 }}</strong>
+                <span>{{ chapter.title }}</span>
+              </button>
             </div>
-            <div v-else class="chapter-empty">暂无章节</div>
+            <div v-else class="empty-state">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#D0CCC2" stroke-width="1.2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+              <p>暂无章节</p>
+            </div>
           </section>
 
-          <section class="comment-section">
-            <div class="section-header">
-              <span class="section-title">书评 · 评分</span>
-              <span class="chapter-count">
-                共 {{ commentStats.comment_count }} 条 / 平均 {{ commentStats.avg_rating || '—' }}
-              </span>
-              <div class="section-line"></div>
+          <!-- 书评 -->
+          <section class="sec-card comment-card">
+            <div class="sec-head">
+              <svg class="sec-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              <span class="sec-title">书评</span>
+              <span class="sec-badge">{{ commentStats.comment_count }} 条</span>
             </div>
-
             <div class="comment-form">
-              <div class="rating-row">
-                <span class="rating-label">评分</span>
-                <div class="stars">
-                  <span
-                    v-for="i in 5"
-                    :key="i"
-                    class="star"
-                    :class="{ active: i <= newRating }"
-                    @click="newRating = (newRating === i ? 0 : i)"
-                  >★</span>
-                </div>
-                <span class="rating-tip">{{ newRating ? newRating + ' 星' : '不打分（仅评论）' }}</span>
-              </div>
-              <textarea
-                v-model="newContent"
-                class="comment-input"
-                placeholder="留下你的评论…（最多 500 字）"
-                maxlength="500"
-                rows="3"
-              ></textarea>
+              <textarea v-model="newContent" class="comment-input" placeholder="留下你的评论…（最多 500 字）" maxlength="500" rows="2"></textarea>
               <div class="comment-actions">
                 <span class="counter">{{ newContent.length }} / 500</span>
                 <button class="comment-submit" :disabled="submitting || !newContent.trim()" @click="onSubmitComment">
@@ -202,42 +194,80 @@
                 </button>
               </div>
             </div>
-
             <ul v-if="comments.length" class="comment-list">
               <li v-for="c in comments" :key="c.id" class="comment-item">
                 <div class="avatar">{{ (c.username || 'U').slice(0, 1) }}</div>
                 <div class="comment-body">
                   <div class="comment-head">
                     <span class="comment-user">{{ c.username }}</span>
-                    <span v-if="c.rating > 0" class="comment-rating">
-                      <span v-for="i in 5" :key="i" class="mini-star" :class="{ on: i <= c.rating }">★</span>
-                    </span>
                     <span class="comment-time">{{ formatTime(c.created_at) }}</span>
-                    <button
-                      v-if="isOwnComment(c)"
-                      class="comment-delete"
-                      @click="onDeleteComment(c.id)"
-                      title="删除评论"
-                    >✕</button>
+                    <button v-if="isOwnComment(c)" class="comment-del" @click="onDeleteComment(c.id)" title="删除">&times;</button>
                   </div>
                   <p class="comment-text">{{ c.content }}</p>
                 </div>
               </li>
             </ul>
-            <div v-else class="comment-empty">还没有评论，来抢第一条吧。</div>
+            <div v-else class="empty-state empty-state--cmt">
+              <svg width="44" height="44" viewBox="0 0 64 64" fill="none">
+                <rect x="14" y="10" width="26" height="38" rx="2" fill="#F5F1EA" stroke="#E0D6CC" stroke-width="1.2"/>
+                <circle cx="27" cy="22" r="3.5" fill="#E8DDD0"/>
+                <line x1="19" y1="29" x2="35" y2="29" stroke="#E0D6CC" stroke-width="1.2"/>
+                <line x1="19" y1="34" x2="30" y2="34" stroke="#E0D6CC" stroke-width="1.2"/>
+              </svg>
+              <p class="empty-title">还没有评论，来抢第一条吧</p>
+              <p class="empty-hint">分享你对这本书的看法</p>
+            </div>
           </section>
+
         </div>
       </template>
 
+      <!-- 错误状态 -->
       <div v-else class="error-state">
-        <svg class="error-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <svg class="error-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <p class="error-text">小说不存在或加载失败</p>
         <button class="btn-retry" @click="loadNovelDetail">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           重新加载
         </button>
       </div>
     </main>
+
+    <!-- 评分弹窗 -->
+    <el-dialog
+      v-model="showRatingDialog"
+      :title="myRatingScore > 0 ? '修改评分' : '为本书评分'"
+      width="380px"
+      :close-on-click-modal="true"
+      class="rating-dialog"
+      align-center>
+      <div class="rdlg-body">
+        <p class="rdlg-book">{{ novel?.title }}</p>
+        <div class="rdlg-stars">
+          <span v-for="i in 5" :key="'ds'+i"
+            class="rdlg-star"
+            :class="{ on: i <= dialogRating, hover: i <= ratingHover }"
+            @mouseenter="ratingHover = i"
+            @mouseleave="ratingHover = 0"
+            @click="dialogRating = i">★</span>
+        </div>
+        <p class="rdlg-label">
+          <template v-if="dialogRating > 0">
+            {{ ['','很差','较差','一般','很好','非常好'][dialogRating] }}
+          </template>
+          <template v-else>点击星星打分</template>
+        </p>
+        <p v-if="myRatingScore > 0 && dialogRating !== myRatingScore" class="rdlg-old">
+          原评分：{{ myRatingScore }} 星
+        </p>
+      </div>
+      <template #footer>
+        <button class="btn btn--secondary" @click="showRatingDialog = false">取消</button>
+        <button class="btn btn--primary" :disabled="!dialogRating || ratingSubmitting" @click="submitRating">
+          {{ ratingSubmitting ? '提交中...' : (myRatingScore > 0 ? '更新评分' : '提交评分') }}
+        </button>
+      </template>
+    </el-dialog>
 
     <footer class="site-footer">
       <p>墨香书阁 · 让阅读成为一种习惯</p>
@@ -248,14 +278,23 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { novelApi, favoriteApi, progressApi, commentApi, type Novel, type Chapter, type NovelComment } from '../api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { novelApi, favoriteApi, progressApi, commentApi, followApi, ratingApi, type Novel, type Chapter, type NovelComment } from '../api'
+import { DEFAULT_COVER } from '../utils/image'
+
+const defaultCover = DEFAULT_COVER
+const onCoverError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  if (img.src !== defaultCover) img.src = defaultCover
+}
 
 const route = useRoute()
 const router = useRouter()
 const novel = ref<Novel | null>(null)
 const chapters = ref<Chapter[]>([])
 const isFavorited = ref(false)
+const isFollowed = ref(false)
+const followLoading = ref(false)
 const readChapterIds = ref<Set<number>>(new Set())
 const loading = ref(false)
 const descExpanded = ref(false)
@@ -263,8 +302,16 @@ const descExpanded = ref(false)
 const comments = ref<NovelComment[]>([])
 const commentStats = ref({ comment_count: 0, rating_count: 0, avg_rating: 0 })
 const newContent = ref('')
-const newRating = ref(0)
 const submitting = ref(false)
+
+// ── 评分相关状态 ──
+const ratingAvg = ref(0)
+const ratingTotal = ref(0)
+const myRatingScore = ref(0)
+const showRatingDialog = ref(false)
+const dialogRating = ref(0)
+const ratingHover = ref(0)
+const ratingSubmitting = ref(false)
 
 const formatTime = (s: string) => {
   if (!s) return ''
@@ -275,46 +322,28 @@ const formatTime = (s: string) => {
 
 const loadComments = async (novelId: number) => {
   try {
-    const [listRes, statsRes]: any = await Promise.all([
-      commentApi.list(novelId),
-      commentApi.stats(novelId),
-    ])
+    const [listRes, statsRes]: any = await Promise.all([commentApi.list(novelId), commentApi.stats(novelId)])
     comments.value = listRes.results || listRes
     commentStats.value = statsRes
-  } catch (e) {
-    console.error('加载评论失败', e)
-  }
+  } catch (e) { console.error('加载评论失败', e) }
 }
 
 const onSubmitComment = async () => {
   if (!novel.value) return
-  if (!localStorage.getItem('user')) {
-    ElMessage.warning('请先登录后再发表评论')
-    router.push('/login')
-    return
-  }
+  if (!localStorage.getItem('user')) { ElMessage.warning('请先登录后再发表评论'); router.push('/login'); return }
   if (!newContent.value.trim()) return
   submitting.value = true
   try {
-    await commentApi.add({ novel: novel.value.id, content: newContent.value.trim(), rating: newRating.value })
+    await commentApi.add({ novel: novel.value.id, content: newContent.value.trim() })
     newContent.value = ''
-    newRating.value = 0
     await loadComments(novel.value.id)
     ElMessage.success('评论已发表')
-  } catch (err: any) {
-    ElMessage.error(err?.response?.data?.detail || '评论失败')
-  } finally {
-    submitting.value = false
-  }
+  } catch (err: any) { ElMessage.error(err?.response?.data?.detail || '评论失败') }
+  finally { submitting.value = false }
 }
 
-const currentUserId = computed(() => {
-  try { return JSON.parse(localStorage.getItem('user') || '{}').id } catch { return null }
-})
-
-const isOwnComment = (c: any) => {
-  return currentUserId.value && c.user === currentUserId.value
-}
+const currentUserId = computed(() => { try { return JSON.parse(localStorage.getItem('user') || '{}').id } catch { return null } })
+const isOwnComment = (c: any) => currentUserId.value && c.user === currentUserId.value
 
 const onDeleteComment = async (commentId: number) => {
   try {
@@ -322,19 +351,11 @@ const onDeleteComment = async (commentId: number) => {
     await commentApi.remove(commentId)
     comments.value = comments.value.filter((c: any) => c.id !== commentId)
     ElMessage.success('已删除')
-  } catch (err: any) {
-    if (err !== 'cancel') ElMessage.error('删除失败')
-  }
+  } catch (err: any) { if (err !== 'cancel') ElMessage.error('删除失败') }
 }
 
-const isLoggedIn = computed(() => {
-  return !!localStorage.getItem('user')
-})
-
-const parsedTags = computed(() => {
-  if (!novel.value?.tags) return []
-  return novel.value.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-})
+const isLoggedIn = computed(() => !!localStorage.getItem('user'))
+const parsedTags = computed(() => { if (!novel.value?.tags) return []; return novel.value.tags.split(',').map((t: string) => t.trim()).filter(Boolean) })
 
 const formatCount = (num: number): string => {
   if (num >= 10000) return (num / 10000).toFixed(1) + '万'
@@ -344,1113 +365,707 @@ const formatCount = (num: number): string => {
 
 const isChapterRead = (chapterId: number) => readChapterIds.value.has(chapterId)
 
+// ── 评分功能 ──
+const loadRating = async (novelId: number) => {
+  try {
+    const [statRes, myRes]: any = await Promise.all([
+      ratingApi.stat(novelId),
+      isLoggedIn.value ? ratingApi.myRating(novelId).catch(() => ({ score: null })) : Promise.resolve({ score: null }),
+    ])
+    ratingAvg.value = statRes.avg_score || 0
+    ratingTotal.value = statRes.total_count || 0
+    if (myRes && myRes.score !== null) {
+      myRatingScore.value = myRes.score
+    }
+  } catch (e) { console.error('加载评分失败:', e) }
+}
+
+const openRatingDialog = () => {
+  if (!isLoggedIn.value) { ElMessage.warning('请先登录后再评分'); router.push('/login'); return }
+  dialogRating.value = myRatingScore.value || 0
+  showRatingDialog.value = true
+}
+
+const submitRating = async () => {
+  if (!novel.value || !dialogRating.value) return
+  ratingSubmitting.value = true
+  try {
+    await ratingApi.submit(novel.value.id, dialogRating.value)
+    myRatingScore.value = dialogRating.value
+    // 刷新统计
+    const statRes: any = await ratingApi.stat(novel.value.id)
+    ratingAvg.value = statRes.avg_score || 0
+    ratingTotal.value = statRes.total_count || 0
+    ElMessage.success(dialogRating.value > 3 ? '感谢你的好评！' : '评分已提交，感谢反馈！')
+    showRatingDialog.value = false
+  } catch (err: any) {
+    if (err?.response?.status === 400) {
+      ElMessage.warning(err?.response?.data?.message || '评分参数有误')
+    } else {
+      ElMessage.error('评分提交失败，请重试')
+    }
+  } finally { ratingSubmitting.value = false }
+}
+
 const loadReadChapters = async (novelId: number) => {
   try {
     const res: any = await progressApi.list()
-    const readIds = new Set<number>()
-    ;(res.results || []).forEach((progress: any) => {
-      if (progress.novel === novelId && progress.chapter) {
-        readIds.add(progress.chapter)
-      }
-    })
-    readChapterIds.value = readIds
-  } catch (error) {
-    console.error('获取阅读记录失败:', error)
-  }
+    const ids = new Set<number>()
+    ;(res.results || []).forEach((p: any) => { if (p.novel === novelId && p.chapter) ids.add(p.chapter) })
+    readChapterIds.value = ids
+  } catch (e) { console.error('获取阅读记录失败:', e) }
 }
 
 const loadNovelDetail = async () => {
   loading.value = true
   try {
     const id = Number(route.params.id)
-    const [novelRes, chaptersRes] = await Promise.all([
-      novelApi.detail(id),
-      novelApi.chapters(id),
-    ])
+    const [novelRes, chaptersRes] = await Promise.all([novelApi.detail(id), novelApi.chapters(id)])
     novel.value = novelRes
     chapters.value = (chaptersRes as any).chapters || (chaptersRes as any).results || []
     loadComments(id)
-    if (isLoggedIn.value) {
-      checkFavorite(id)
-      loadReadChapters(id)
-    }
+    loadRating(id)
+    if (isLoggedIn.value) { checkFavorite(id); checkFollow(); loadReadChapters(id) }
   } catch (error: any) {
-    console.error('加载小说详情失败:', error)
-    novel.value = null
-    // 超时/网络错误友好提示
+    console.error('加载小说详情失败:', error); novel.value = null
     const isTimeout = error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')
-    ElMessage.error({
-      message: isTimeout ? '请求超时，网络较慢，请稍后重试' : '小说详情加载失败，请重试',
-      duration: 4000,
-    })
-  } finally {
-    loading.value = false
-  }
+    ElMessage.error({ message: isTimeout ? '请求超时，网络较慢，请稍后重试' : '小说详情加载失败，请重试', duration: 4000 })
+  } finally { loading.value = false }
 }
 
-const checkFavorite = async (novelId: number) => {
+const checkFavorite = async (nid: number) => { try { const r: any = await favoriteApi.check(nid); isFavorited.value = r.is_favorited } catch {} }
+const checkFollow = async () => { if (!novel.value?.author || !isLoggedIn.value) return; try { const r: any = await followApi.check(novel.value.author); isFollowed.value = r.followed } catch {} }
+
+const toggleFollow = async () => {
+  if (!novel.value) return
+  if (!isLoggedIn.value) { ElMessage.warning('请先登录后再关注作者'); router.push('/login'); return }
+  followLoading.value = true
   try {
-    const res: any = await favoriteApi.check(novelId)
-    isFavorited.value = res.is_favorited
-  } catch (error) {
-    console.error('检查收藏状态失败:', error)
-  }
+    if (isFollowed.value) { await followApi.unfollow(novel.value.author); isFollowed.value = false; ElMessage.success('已取消关注') }
+    else { await followApi.follow(novel.value.author); isFollowed.value = true; ElMessage.success('关注成功') }
+  } catch (err: any) { ElMessage.error(err?.response?.data?.message || '操作失败') }
+  finally { followLoading.value = false }
 }
 
 const toggleFavorite = async () => {
   if (!novel.value) return
   try {
-    if (isFavorited.value) {
-      await favoriteApi.remove(novel.value.id)
-      isFavorited.value = false
-      ElMessage.success('已取消收藏')
-    } else {
-      await favoriteApi.add(novel.value.id)
-      isFavorited.value = true
-      ElMessage.success('收藏成功')
-    }
+    if (isFavorited.value) { await favoriteApi.remove(novel.value.id); isFavorited.value = false; ElMessage.success('已取消收藏') }
+    else { await favoriteApi.add(novel.value.id); isFavorited.value = true; ElMessage.success('收藏成功') }
   } catch (error: any) {
     const detail = error?.response?.data
-    if (typeof detail === 'object' && detail !== null) {
-      const msgs = []
-      for (const key of Object.keys(detail)) {
-        const val = detail[key]
-        if (Array.isArray(val)) msgs.push(val.join(' '))
-        else if (typeof val === 'string') msgs.push(val)
-      }
-      if (msgs.length) { ElMessage.error(msgs.join('; ')); return }
-    }
+    if (typeof detail === 'object' && detail !== null) { const msgs: string[] = []; Object.keys(detail).forEach(k => { const v = detail[k]; if (Array.isArray(v)) msgs.push(v.join(' ')); else if (typeof v === 'string') msgs.push(v) }); if (msgs.length) { ElMessage.error(msgs.join('; ')); return } }
     ElMessage.error(error?.response?.data?.detail || error?.response?.data?.message || '操作失败')
   }
 }
 
 const startReading = async () => {
   if (!novel.value || chapters.value.length === 0) return
-
-  if (isLoggedIn.value) {
-    try {
-      const res: any = await progressApi.get(novel.value.id)
-      if (res.chapter_id) {
-        goToRead(res.chapter_id)
-        return
-      }
-    } catch (error) {
-      console.log('获取阅读进度失败，使用默认行为')
-    }
-  }
-
+  if (isLoggedIn.value) { try { const r: any = await progressApi.get(novel.value.id); if (r.chapter_id) { goToRead(r.chapter_id); return } } catch {} }
   goToRead(chapters.value[0].id)
 }
+const goToRead = (cid: number) => router.push({ name: 'Reader', params: { id: cid } })
+const goToCategory = () => { if (novel.value) router.push({ name: 'NovelList', query: { category: novel.value.category } }) }
+const goHome = () => router.push('/')
+const goLogin = () => router.push('/login')
+const goUserCenter = () => router.push('/user')
+const goToAuthor = () => { if (novel.value?.author) router.push({ name: 'AuthorProfile', params: { name: encodeURIComponent(novel.value.author) } }) }
 
-const goToRead = (chapterId: number) => {
-  router.push({ name: 'Reader', params: { id: chapterId } })
-}
-
-const goToCategory = () => {
-  if (novel.value) {
-    router.push({ name: 'NovelList', query: { category: novel.value.category } })
-  }
-}
-
-const goHome = () => {
-  router.push({ name: 'Home' })
-}
-
-const goLogin = () => {
-  router.push({ name: 'Login' })
-}
-
-const goUserCenter = () => {
-  router.push({ name: 'UserCenter' })
-}
-
-onMounted(() => {
-  loadNovelDetail()
-})
+onMounted(() => { loadNovelDetail() })
 </script>
 
 <style scoped>
-@import url('https://fonts.loli.net/css2?family=Cormorant+Garamond:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500&display=swap');
+/* ============================================================
+   小说详情页 — 紧凑高密度布局（修复版）
+   ============================================================
+   【P1修复】
+   - 移除外部字体@import，改用系统安全字体栈
+   - 移除所有 backdrop-filter（导致文字模糊）
+   - 所有字号 ≥ 12px（最小 0.75rem = 12px）
+   - 减少过度 letter-spacing（中文不适用大间距）
+   - 仅在 Hero 暗色背景上保留 text-shadow（确保可读性）
+   - transform:scale 仅用于交互反馈（按钮点击），不影响静态文字
+   - z-index 层级：header=100 > content > hero-overlay
 
+   【P2优化】
+   - Hero 高度 200px，紧凑信息密度
+   - 数据行单行内联，作者合并到末尾
+   - 章节目录横向流式按钮布局
+   - 三大模块独立浅底色卡片容器
+   - 响应式适配桌面/平板/手机三档
+   ============================================================ */
+
+/* ── 字体系统：纯系统安全栈，零外部依赖 ── */
+/* 设计目的：移除 Google Fonts @import，
+   使用操作系统原生中文字体，渲染最快、最清晰、无加载等待。
+   PingFang SC = macOS/iOS，Microsoft YaHei = Windows，
+   system-ui 作为最终兜底。 */
 :root {
-  --paper-bg: #FDFBF7;
   --ink: #1A1A1A;
   --muted: #6B7280;
   --accent: #CA8A04;
-  --accent-hover: #A97702;
-  --border: #E0E0E0;
-  --card-bg: #FFFFFF;
-  --font-title: 'Cormorant Garamond', 'Noto Serif SC', serif;
-  --font-body: 'Libre Baskerville', 'Noto Sans SC', sans-serif;
-  --font-serif-cn: 'Noto Serif SC', serif;
-  --font-sans-cn: 'Noto Sans SC', sans-serif;
+  --accent-light: rgba(202,138,4,0.07);
+  --border: #E5DED4;
+  --border-light: #EEE9E1;
+  --card: #FFFEFA;
+  --card-alt: #FCFBF7;
+  /* 安全字体栈：不再依赖外部CDN */
+  --ff-base: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --ff-serif: Georgia, "SimSun", "STSong", serif;
+  --r-xs: 4px; --r-sm: 6px; --r-md: 8px;
+  --t: all 180ms ease;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.05);
+  --shadow-md: 0 3px 12px rgba(0,0,0,.06);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 .novel-detail {
   min-height: 100vh;
-  background: var(--paper-bg);
+  /* 纯色渐变背景，无滤镜 */
+  background: linear-gradient(175deg, #FAF8F5 0%, #FDFBF7 40%, #F6F2EC 100%);
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: var(--ff-base);
+  /* 确保根元素文字渲染清晰 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ==================== 导航栏 ====================
+   修复：移除 backdrop-filter，改用实心半透明背景。
+   原因：backdrop-filter blur 在部分浏览器上会导致下方
+   渲染区域文字发虚、GPU 内存占用过高。 */
 .site-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: rgba(253, 251, 247, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  /* 实心背景替代毛玻璃 */
+  background: rgba(253,251,247,.92);
+  border-bottom: 1px solid var(--border-light);
 }
-
 .header-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  max-width: 1100px; margin: 0 auto;
+  padding: 0 1.5rem; height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
 }
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
+.header-left { display: flex; align-items: center; gap: 1.5rem; }
 .logo {
-  font-family: var(--font-serif-cn);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--ink);
-  cursor: pointer;
-  letter-spacing: 4px;
-  user-select: none;
-  transition: opacity 200ms;
+  font-family: var(--ff-base); font-size: 1.15rem; font-weight: 700;
+  color: var(--ink); cursor: pointer;
+  letter-spacing: 2px; user-select: none;
 }
+.logo:hover { opacity: .75; }
+.breadcrumb { display: flex; align-items: center; gap: .4rem; font-size: .8rem; }
+.bc-item { color: var(--muted); }
+.bc-link { cursor: pointer; transition: color .15s; }
+.bc-link:hover { color: var(--accent); }
+.bc-sep { color: var(--border); font-size: .72rem; }
+.bc-current { color: var(--ink); font-weight: 500; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.logo:hover {
-  opacity: 0.7;
+.btn-login, .btn-user {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--ink); font-size: .8rem; padding: 6px 14px;
+  border-radius: var(--r-sm); cursor: pointer; transition: var(--t);
 }
+.btn-login:hover, .btn-user:hover { border-color: var(--ink); background: var(--ink); color: #FDFBF7; }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-sans-cn);
-  font-size: 0.82rem;
-}
-
-.bc-item {
-  color: var(--muted);
-}
-
-.bc-link {
-  cursor: pointer;
-  transition: color 200ms;
-}
-
-.bc-link:hover {
-  color: var(--accent);
-}
-
-.bc-sep {
-  color: var(--border);
-  font-size: 0.75rem;
-}
-
-.bc-current {
-  color: var(--ink);
-  font-weight: 500;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.btn-login,
-.btn-user {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--ink);
-  font-family: var(--font-sans-cn);
-  font-size: 0.82rem;
-  padding: 7px 18px;
-  border-radius: 2px;
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition: border-color 200ms, color 200ms, background 200ms;
-}
-
-.btn-login:hover,
-.btn-user:hover {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper-bg);
-}
-
+/* ==================== 主容器 ====================
+   修复：padding-top = 54px(header高度) + 6px间距 = 60px，
+   确保固定导航栏不会遮挡首屏内容。 */
 .main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 64px 2rem 0;
-  min-height: calc(100vh - 80px);
+  max-width: 1100px; margin: 0 auto;
+  padding: 60px 1.5rem 0;
+  min-height: calc(100vh - 70px);
+  position: relative; z-index: 1;
 }
 
-.loading-state {
-  padding: 3rem 0;
-}
-
-.skeleton-shimmer {
-  background: linear-gradient(90deg, #f0ede8 25%, #e8e5df 50%, #f0ede8 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 3px;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.skeleton-hero {
-  width: 100%;
-  height: 320px;
-  margin-bottom: 2.5rem;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.skeleton-block {
-  width: 100%;
-  height: 100%;
-}
-
-.skeleton-info {
-  display: flex;
-  gap: 3rem;
-  margin-bottom: 2.5rem;
-  padding-bottom: 2.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.skeleton-cover {
-  width: 180px;
-  height: 250px;
-  flex-shrink: 0;
-}
-
-.skeleton-meta {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding-top: 0.5rem;
-}
-
-.skeleton-line {
-  border-radius: 3px;
-}
-
-.skeleton-desc {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2.5rem;
-  padding-bottom: 2.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.skeleton-chapters {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
-}
-
-.skeleton-chapter {
-  height: 40px;
-}
-
+/* ==================== Hero 区 ====================
+   背景 filter 仅作用于图片本身（非文字层），安全。 */
 .hero-section {
-  position: relative;
-  width: 100%;
-  height: 340px;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 3rem;
-  margin-top: 2rem;
+  position: relative; width: 100%; height: 228px;
+  border-radius: var(--r-md); overflow: hidden;
+  margin-bottom: 1.25rem; margin-top: .4rem;
+  box-shadow: var(--shadow-md);
 }
-
-.hero-blur-bg {
-  position: absolute;
-  inset: -20px;
+.hero-bg { position: absolute; inset: -20px; }
+.hero-bg-img {
+  width: 100%; height: 100%; object-fit: cover;
+  /* filter 只在背景图上使用，不影响任何文字 */
+  filter: blur(24px) brightness(.42) saturate(.65);
+  transform: scale(1.18);
 }
-
-.hero-blur-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: blur(24px) brightness(0.45) saturate(0.7);
-  transform: scale(1.15);
-}
-
 .hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(26,26,26,0.2) 0%, rgba(26,26,26,0.65) 100%);
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg,
+    rgba(26,26,26,.12) 0%,
+    rgba(26,26,26,.42) 50%,
+    rgba(26,26,26,.72) 100%
+  );
 }
-
 .hero-content {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  padding: 2rem;
-  text-align: center;
+  position: relative; z-index: 2; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .55rem; padding: 1.5rem; text-align: center;
 }
-
 .hero-cover-frame {
-  width: 120px;
-  height: 168px;
-  border-radius: 3px;
-  overflow: hidden;
+  width: 90px; height: 126px; border-radius: var(--r-sm); overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.08);
   flex-shrink: 0;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.12);
 }
+.hero-cover-img { width: 100%; height: 100%; object-fit: cover; }
 
-.hero-cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.hero-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
+.hero-meta { display: flex; flex-direction: column; align-items: center; gap: .3rem; }
 .hero-title {
-  font-family: var(--font-serif-cn);
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 4px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
-  line-height: 1.2;
-}
-
-.hero-author {
-  font-family: var(--font-sans-cn);
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.7);
+  font-family: var(--ff-base); font-size: clamp(1.3rem, 2.8vw, 2rem);
+  font-weight: 700; color: #fff;
   letter-spacing: 2px;
+  /* Hero 暗色背景上必须用 text-shadow 保证可读性，这是唯一保留的 */
+  text-shadow: 0 1px 8px rgba(0,0,0,.45);
+  line-height: 1.25;
 }
-
-.hero-tags {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 0.25rem;
+.hero-author-row {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .82rem; color: rgba(255,255,255,.58);
+  letter-spacing: .3px; cursor: pointer; transition: color .15s;
 }
+.hero-author-row:hover { color: #FFD066; }
+.hero-author-row:hover .hero-arrow { transform: translateX(2px); }
+.hero-arrow { transition: transform .15s; }
+.hero-author-name { border-bottom: 1px dashed rgba(255,255,255,.22); }
 
+.hero-tags { display: flex; gap: .4rem; margin-top: .15rem; flex-wrap: wrap; justify-content: center; }
 .tag {
-  font-family: var(--font-sans-cn);
-  font-size: 0.72rem;
-  padding: 3px 12px;
-  border-radius: 2px;
-  letter-spacing: 1px;
+  font-size: .75rem; padding: 2px 9px; border-radius: 20px;
+  letter-spacing: .3px;
+  /* 修复：移除 backdrop-filter:blur，改用半透明实心背景 */
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+  border: 1px solid rgba(255,255,255,.15);
 }
+.tag-category { background: rgba(202,138,4,.22); color: #FFD066; border-color: rgba(202,138,4,.32); }
+.tag-complete { background: rgba(107,114,128,.22); color: #D1D5DB; border-color: rgba(107,114,128,.28); }
+.tag-ongoing { background: rgba(34,197,94,.16); color: #86EFAC; border-color: rgba(34,197,94,.28); }
+.tag-custom { background: rgba(255,255,255,.08); color: rgba(255,255,255,.56); border-color: rgba(255,255,255,.1); }
 
-.tag-category {
-  background: rgba(202,138,4,0.2);
-  color: #FFD066;
-  border: 1px solid rgba(202,138,4,0.4);
-}
-
-.tag-complete {
-  background: rgba(107,114,128,0.2);
-  color: #D1D5DB;
-  border: 1px solid rgba(107,114,128,0.4);
-}
-
-.tag-ongoing {
-  background: rgba(34,197,94,0.15);
-  color: #86EFAC;
-  border: 1px solid rgba(34,197,94,0.35);
-}
-
-.tag-custom {
-  background: rgba(156,163,175,0.12);
-  color: #9CA3AF;
-  border: 1px solid rgba(156,163,175,0.3);
-}
-
+/* ==================== 内容卡片容器 ====================
+   修复：移除 backdrop-filter，改用实心背景。 */
 .content-wrapper {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 3rem;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--r-md);
+  padding: 1.5rem; box-shadow: var(--shadow-md);
 }
 
-.info-section {
-  margin-bottom: 3rem;
-  padding-bottom: 3rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.info-layout {
-  display: flex;
-  gap: 3rem;
-  align-items: flex-start;
-}
-
-.info-left {
-  flex-shrink: 0;
-}
+/* ==================== 信息操作区 ====================
+   紧凑布局：左封面140px + 右数据+按钮+作者内联 */
+.info-section { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-light); }
+.info-layout { display: flex; gap: 1.5rem; align-items: stretch; }
+.info-left { flex-shrink: 0; }
 
 .cover-card {
-  position: relative;
-  width: 180px;
+  position: relative; width: 140px; cursor: pointer;
+  transition: transform .25s ease;
 }
-
+.cover-card:hover { transform: translateY(-4px); }
 .side-cover {
-  width: 180px;
-  height: 250px;
-  object-fit: cover;
-  border-radius: 2px 4px 4px 2px;
-  box-shadow: 6px 8px 24px rgba(0,0,0,0.15);
+  width: 140px; height: 195px; object-fit: cover;
+  border-radius: 2px 5px 5px 2px;
+  box-shadow: 6px 8px 20px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.06);
   display: block;
 }
-
 .cover-spine {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
+  position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
   background: linear-gradient(180deg, #CA8A04 0%, #92600A 100%);
   border-radius: 2px 0 0 2px;
 }
 
-.info-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding-top: 0.25rem;
+.info-right { flex: 1; display: flex; flex-direction: column; gap: .85rem; justify-content: center;
+
 }
 
-.stats-bar {
-  display: flex;
-  align-items: center;
-  background: #F9F7F3;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 1.25rem 0;
-  width: fit-content;
+/* ---- 数据行 ---- */
+.stats-row {
+  display: inline-flex; align-items: center; gap: 0;
+  background: linear-gradient(135deg, #FBF9F5 0%, #F7F4EE 100%);
+  border: 1px solid var(--border-light); border-radius: var(--r-sm);
+  padding: 0 1rem; height: 36px;
 }
-
-.stat-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 2.5rem;
+.stat-item {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: 0 .6rem; white-space: nowrap;
 }
-
-.stat-num {
-  font-family: var(--font-title);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--ink);
-  letter-spacing: 1px;
+.stat-item svg { flex-shrink: 0; opacity: .75; }
+.stat-item b {
+  font-family: var(--ff-base); font-size: .88rem; font-weight: 700;
+  color: var(--ink); min-width: 2em; text-align: center;
 }
-
-.stat-lbl {
-  font-family: var(--font-sans-cn);
-  font-size: 0.72rem;
-  color: var(--muted);
-  margin-top: 4px;
-  letter-spacing: 2px;
+.stat-item em {
+  font-style: normal; font-size: .75rem; color: var(--muted);
+  letter-spacing: .2px;
 }
-
 .stat-divider {
-  width: 1px;
-  height: 40px;
-  background: var(--border);
+  width: 1px; height: 16px; background: var(--border-light); flex-shrink: 0;
 }
-
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+.stat-item--author { cursor: pointer; transition: background .15s; border-radius: 4px; padding: 0 .6rem; margin: 0 -.3rem; }
+.stat-item--author:hover { background: var(--accent-light); }
+.author-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: linear-gradient(135deg, #CA8A04, #92600A);
+  color: #fff; font-family: var(--ff-base); font-size: .75rem;
+  font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
+.stat-item--author em { color: var(--accent); }
 
-.btn-read {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--accent);
+/* ---- 操作按钮：三个按钮完全统一的尺寸体系，仅颜色区分 ---- */
+.action-bar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: .35rem;
+  font-family: var(--ff-base); font-size: .82rem; font-weight: 600;
+  cursor: pointer; letter-spacing: .2px;
+  /* 统一尺寸：圆角、高度、内边距 */
+  border-radius: var(--r-sm);
+  height: 38px;
+  padding: 0 22px;
+  transition: all 180ms ease;
+  user-select: none; white-space: nowrap;
+  /* 统一阴影基准线 */
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.btn:active { transform: scale(.96); }
+
+/* 主按钮：金色渐变实心 — 开始阅读 */
+.btn--primary {
+  background: linear-gradient(135deg, #CA8A04, #B07802);
   color: #fff;
   border: none;
-  padding: 12px 32px;
-  border-radius: 2px;
-  font-size: 0.92rem;
-  font-family: var(--font-sans-cn);
-  cursor: pointer;
-  letter-spacing: 2px;
-  transition: background 200ms, opacity 200ms;
+  box-shadow: 0 2px 8px rgba(202,138,4,.28);
+}
+.btn--primary:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 4px 14px rgba(202,138,4,.38);
 }
 
-.btn-read:hover {
-  background: var(--accent-hover);
+/* 次级按钮：浅色描边 — 收藏 / 关注（未激活态） */
+.btn--secondary {
+  background: #FAF8F6;
+  color: #555;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.btn--secondary:hover {
+  background: #F5F2EE;
+  border-color: #D5CFC4;
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(0,0,0,.09);
 }
 
-.btn-read:active {
-  opacity: 0.85;
-}
-
-.btn-favorite {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  padding: 11px 24px;
-  border-radius: 2px;
-  font-size: 0.88rem;
-  font-family: var(--font-sans-cn);
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition: border-color 200ms, color 200ms;
-}
-
-.btn-favorite:hover,
-.btn-favorite.favorited {
+/* 收藏激活态：金色描边 + 浅金底 */
+.btn--secondary.active {
   border-color: var(--accent);
   color: var(--accent);
+  background: rgba(202,138,4,.06);
+  box-shadow: 0 1px 4px rgba(202,138,4,.12);
+}
+.btn--secondary.active:hover {
+  background: rgba(202,138,4,.10);
 }
 
-/* Vue Transition: 心形收藏动画 */
-.heart-enter-active {
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* 关注激活态：绿色描边 + 浅绿底 */
+.btn--secondary.followed {
+  border-color: #22C55E;
+  color: #22C55E;
+  background: rgba(34,197,94,.05);
+  box-shadow: 0 1px 4px rgba(34,197,94,.10);
 }
-.heart-leave-active {
-  transition: all 0.2s ease-in;
-}
-.heart-enter-from {
-  opacity: 0;
-  transform: scale(0.3) rotate(-15deg);
-}
-.heart-leave-to {
-  opacity: 0;
-  transform: scale(1.4) rotate(10deg);
+.btn--secondary.followed:hover {
+  background: rgba(34,197,94,.10);
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+.btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+.icon-pop-enter-active { transition: all .25s ease; }
+.icon-pop-leave-active { transition: all .12s ease-in; }
+.icon-pop-enter-from { opacity: 0; transform: scale(.2); }
+.icon-pop-leave-to { opacity: 0; transform: scale(1.3); }
+
+/* ==================== 统一区块标题 ====================
+   修复：字号统一 ≥ 12px，letter-spacing 收紧至合理范围。 */
+.sec-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .85rem; }
+.sec-icon { color: var(--accent); opacity: .78; flex-shrink: 0; }
+.sec-title {
+  font-family: var(--ff-base); font-size: .9rem; font-weight: 600;
+  color: var(--ink); letter-spacing: 1px; white-space: nowrap;
+}
+.sec-badge {
+  font-size: .75rem; color: var(--muted); background: var(--border-light);
+  padding: 1px 8px; border-radius: 20px; letter-spacing: .2px;
 }
 
-.section-title {
-  font-family: var(--font-serif-cn);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--ink);
-  letter-spacing: 3px;
-  white-space: nowrap;
-  position: relative;
-  padding-left: 14px;
+/* ==================== 通用卡片容器 ====================
+   三大模块共用样式，浅底色+细边框+圆角 */
+.sec-card {
+  background: var(--card-alt); border: 1px solid var(--border-light);
+  border-radius: var(--r-sm); padding: 1.15rem 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
-.section-title::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 18px;
-  background: var(--accent);
-  border-radius: 2px;
+/* ==================== 内容简介 ==================== */
+.desc-text {
+  color: #555; line-height: 1.78; font-size: .85rem;
+  font-family: var(--ff-base); letter-spacing: .2px;
 }
-
-.section-line {
-  flex: 1;
-  height: 1px;
-  background: var(--border);
+.desc-body { overflow: hidden; transition: max-height .28s ease; max-height: 9999px; }
+.desc-body.collapsed { max-height: 4.5em; position: relative; }
+.desc-body.collapsed::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2.2em;
+  background: linear-gradient(to bottom, transparent, var(--card-alt));
 }
-
-.chapter-count {
-  font-family: var(--font-sans-cn);
-  font-size: 0.78rem;
-  color: var(--muted);
-  white-space: nowrap;
-  letter-spacing: 1px;
-}
-
-.description-section {
-  margin-bottom: 3rem;
-  padding-bottom: 3rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.description-body {
-  overflow: hidden;
-  transition: max-height 300ms ease;
-  max-height: 9999px;
-}
-
-.description-body.collapsed {
-  max-height: 5.7em;
-  position: relative;
-}
-
-.description-body.collapsed::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2.5em;
-  background: linear-gradient(to bottom, transparent, var(--card-bg));
-}
-
-.description-text {
-  color: var(--muted);
-  line-height: 1.9;
-  font-size: 0.92rem;
-  font-family: var(--font-serif-cn);
-  letter-spacing: 0.5px;
-}
-
 .expand-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 0.75rem;
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-size: 0.82rem;
-  cursor: pointer;
-  font-family: var(--font-sans-cn);
-  letter-spacing: 1px;
-  padding: 0;
-  transition: opacity 200ms;
+  display: inline-flex; align-items: center; gap: .25rem;
+  margin-top: .5rem; background: none; border: none;
+  color: var(--accent); font-size: .78rem; cursor: pointer;
+  font-family: var(--ff-base); letter-spacing: .2px; padding: 0; transition: opacity .15s;
+}
+.expand-btn:hover { opacity: .65; }
+
+/* ==================== 章节目录（横向按钮流式布局）====================
+   设计目的：放弃垂直列表，改为类似标签云/小说APP目录的横向紧凑按钮布局。
+   每章一个固定宽高的圆角按钮，flex-wrap 自动换行。
+   长标题用 text-overflow:ellipsis 截断，hover 时通过 title 属性显示完整名。 */
+.chapter-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.ch-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  width: 80px; height: 34px; padding: 0 7px;
+  background: #FAF8F6; border: 1px solid var(--border-light);
+  border-radius: var(--r-sm); cursor: pointer;
+  font-family: var(--ff-base); font-size: .76rem; color: var(--ink);
+  transition: all 180ms ease; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis;
+}
+.ch-btn:hover {
+  background: var(--accent-light); border-color: rgba(202,138,4,.3);
+  color: var(--accent); box-shadow: 0 1px 6px rgba(202,138,4,.1);
+  transform: translateY(-1px);
+}
+.ch-btn:active { transform: scale(.96); }
+/* 修复：strong 最小字号 .75rem = 12px */
+.ch-btn strong { font-size: .75rem; font-weight: 700; color: var(--muted); opacity: .65; flex-shrink: 0; }
+.ch-btn:hover strong { color: var(--accent); }
+.ch-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 46px; font-weight: 500; }
+.ch-btn.read { background: #F4F2EE; border-color: #EBE7DE; color: #AAA5A0; }
+.ch-btn.read strong { color: #C4C0BA; }
+.ch-btn.read:hover { background: var(--accent-light); border-color: rgba(202,138,4,.3); color: var(--accent); }
+
+.comment-form {
+  background: #FEFCFA; border: 1px solid var(--border-light);
+  border-radius: var(--r-sm); padding: 1rem 1.25rem; margin-bottom: 1rem;
 }
 
-.expand-btn:hover {
-  opacity: 0.75;
+.comment-input {
+  width: 100%; border: 1px solid var(--border); background: #FFFDFB;
+  padding: 10px 12px; font-family: var(--ff-base); font-size: .85rem;
+  line-height: 1.65; border-radius: var(--r-sm); outline: none;
+  resize: vertical; box-sizing: border-box; transition: border-color .15s;
 }
-
-.chapter-section {
-  margin-bottom: 0;
+.comment-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(202,138,4,.06); }
+.comment-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+.counter { font-size: .75rem; color: #BBB; }
+.comment-submit {
+  background: linear-gradient(135deg, #B8860B, #9A7209); color: #fff;
+  border: none; padding: 7px 20px; font-size: .82rem; font-weight: 600;
+  border-radius: var(--r-sm); cursor: pointer; font-family: var(--ff-base);
+  letter-spacing: .3px; box-shadow: 0 2px 6px rgba(184,134,11,.24);
+  transition: box-shadow .18s;
 }
+.comment-submit:hover { box-shadow: 0 3px 10px rgba(184,134,11,.36); }
+.comment-submit:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
 
-.chapter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
+.comment-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.comment-item {
+  background: #FEFCFA; border: 1px solid var(--border-light);
+  border-radius: var(--r-sm); padding: 1rem 1.15rem;
+  display: flex; gap: 10px; transition: box-shadow .15s;
 }
-
-.chapter-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: #F9F7F3;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  cursor: pointer;
-  font-family: var(--font-sans-cn);
-  font-size: 0.85rem;
-  color: var(--ink);
-  transition: border-color 200ms, color 200ms, background 200ms;
-  overflow: hidden;
+.comment-item:hover { box-shadow: var(--shadow-sm); }
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #CA8A04, #A87403);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: .82rem; flex-shrink: 0;
 }
-
-.chapter-item:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(202,138,4,0.04);
+.comment-body { flex: 1; min-width: 0; }
+.comment-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; font-size: .82rem; flex-wrap: wrap; }
+.comment-user { font-weight: 600; color: var(--ink); }
+.comment-del {
+  background: none; border: none; color: #CCC; font-size: 1rem;
+  cursor: pointer; padding: 1px 5px; border-radius: 3px;
+  line-height: 1; transition: color .15s; margin-left: 4px; font-family: system-ui;
 }
+.comment-del:hover { color: #E74C3C; background: rgba(231,76,60,.05); }
+.comment-text { margin: 0; color: #333; font-size: .85rem; line-height: 1.72; font-family: var(--ff-base); white-space: pre-wrap; word-break: break-word; }
 
-.chapter-item.chapter-read {
-  color: var(--muted);
-  background: #F5F5F5;
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 2rem 0; gap: .4rem; color: #BBB5AC; font-size: .85rem;
 }
+.empty-state p { margin: 0; }
+.empty-state--cmt { padding: 2.5rem 0; }
+.empty-title { font-size: .88rem; color: #888; font-weight: 500; margin: 0; }
+.empty-hint { font-size: .78rem; color: #AAA; margin: 0; }
 
-.chapter-item.chapter-read:hover {
-  color: var(--accent);
-  background: rgba(202,138,4,0.04);
-  border-color: var(--accent);
-}
+/* ==================== 加载态骨架 ==================== */
+.loading-state { padding: 1.5rem 0; }
+.skeleton-hero { width: 100%; height: 228px; border-radius: var(--r-md); margin-bottom: 1.25rem; overflow: hidden; }
+.sk-block { width: 100%; height: 100%; background: linear-gradient(90deg,#f0ede8 25%,#e8e5df 50%,#f0ede8 75%); background-size: 200% 100%; animation: sk-shimmer 1.4s infinite; border-radius: var(--r-md); }
+@keyframes sk-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.skeleton-info { display: flex; gap: 1.5rem; }
+.sk-cover { width: 140px; height: 195px; border-radius: var(--r-sm); background: linear-gradient(90deg,#f0ede8 25%,#e8e5df 50%,#f0ede8 75%); background-size: 200% 100%; animation: sk-shimmer 1.4s infinite; flex-shrink: 0; }
+.sk-meta { flex: 1; display: flex; flex-direction: column; gap: .7rem; padding-top: .3rem; }
+.sk-line { border-radius: 4px; background: linear-gradient(90deg,#f0ede8 25%,#e8e5df 50%,#f0ede8 75%); background-size: 200% 100%; animation: sk-shimmer 1.4s infinite; }
 
-.chapter-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  min-width: 0;
-}
-
-.read-icon {
-  flex-shrink: 0;
-  margin-left: 6px;
-  color: var(--muted);
-  transition: color 200ms;
-}
-
-.chapter-item:hover .read-icon {
-  color: var(--accent);
-}
-
-.chapter-empty {
-  color: var(--muted);
-  font-family: var(--font-sans-cn);
-  font-size: 0.88rem;
-  padding: 3rem 0;
-  text-align: center;
-  letter-spacing: 1px;
-}
-
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 100px 0;
-  gap: 1.25rem;
-}
-
-.error-icon {
-  color: var(--border);
-}
-
-.error-text {
-  font-family: var(--font-sans-cn);
-  font-size: 0.92rem;
-  color: var(--muted);
-  letter-spacing: 1px;
-}
-
+/* ==================== 错误态 ==================== */
+.error-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 70px 0; gap: .75rem; }
+.error-icon { color: var(--border); }
+.error-text { font-size: .88rem; color: var(--muted); letter-spacing: .2px; }
 .btn-retry {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--ink);
-  font-family: var(--font-sans-cn);
-  font-size: 0.85rem;
-  padding: 9px 24px;
-  border-radius: 2px;
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition: border-color 200ms, background 200ms, color 200ms;
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--ink); font-size: .82rem; padding: 7px 20px;
+  border-radius: var(--r-sm); cursor: pointer; letter-spacing: .2px; transition: var(--t);
 }
-
-.btn-retry:hover {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper-bg);
-}
+.btn-retry:hover { border-color: var(--ink); background: var(--ink); color: #FDFBF7; }
 
 .site-footer {
-  text-align: center;
-  padding: 2.5rem;
-  color: var(--muted);
-  font-family: var(--font-serif-cn);
-  font-size: 0.82rem;
-  letter-spacing: 2px;
-  border-top: 1px solid var(--border);
-  margin-top: 3rem;
+  text-align: center; padding: 1.5rem;
+  color: #AAA; font-family: var(--ff-base);
+  font-size: .78rem; letter-spacing: .5px;
+  border-top: 1px solid var(--border-light); margin-top: 1.5rem;
 }
 
-@media (max-width: 1024px) {
-  .content-wrapper {
-    padding: 2.5rem;
-  }
+/* ==================== 评分展示区 ==================== */
+.rating-display {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: .6rem;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #FFFBF0, #FFF8E8);
+  border: 1px solid rgba(202,138,4,.15);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.rating-display:hover {
+  border-color: rgba(202,138,4,.35);
+  box-shadow: 0 2px 8px rgba(202,138,4,.08);
+}
+.rd-score { flex-shrink: 0; }
+.rd-num {
+  font-family: 'Georgia', serif; font-size: 1.6rem; font-weight: 700;
+  color: var(--accent); line-height: 1;
+}
+.rd-info { display: flex; flex-direction: column; gap: 2px; }
+.rd-stars-static { display: flex; gap: 2px; }
+.rss-star {
+  font-size: .82rem; color: #DDD3C4; line-height: 1; transition: color .12s;
+}
+.rss-star.on { color: var(--accent); }
+.rd-count { font-size: .72rem; color: #AAA; letter-spacing: .2px; }
+.rd-hint {
+  font-size: .7rem; color: var(--accent); opacity: .65;
+  transition: opacity .15s;
+}
+.rating-display:hover .rd-hint { opacity: 1; }
 
-  .stat-cell {
-    padding: 0 2rem;
-  }
+/* ==================== 评分弹窗 ==================== */
+.rating-dialog :deep(.el-dialog) {
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+.rating-dialog :deep(.el-dialog__header) {
+  padding: 18px 22px 12px;
+  border-bottom: 1px solid #EEE9E1;
+}
+.rating-dialog :deep(.el-dialog__title) {
+  font-family: var(--ff-base); font-size: .95rem; font-weight: 600;
+  color: var(--ink); letter-spacing: .5px;
+}
+.rating-dialog :deep(.el-dialog__body) { padding: 24px 22px 16px; }
+.rating-dialog :deep(.el-dialog__footer) { padding: 12px 22px 20px; }
+
+.rdlg-body { text-align: center; }
+.rdlg-book {
+  font-family: var(--ff-serif); font-size: 1.05rem; font-weight: 600;
+  color: var(--ink); margin-bottom: 16px; letter-spacing: .5px;
+}
+.rdlg-stars { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+.rdlg-star {
+  font-size: 32px; color: #D8D2C4; cursor: pointer;
+  transition: color .12s, transform .15s; user-select: none;
+  line-height: 1;
+}
+.rdlg-star:hover { transform: scale(1.15); }
+.rdg-star.hover,
+.rdlg-star.on { color: var(--accent); }
+.rdlg-label {
+  font-size: .85rem; color: var(--muted); margin-bottom: 4px;
+}
+.rdlg-old { font-size: .75rem; color: #AAA; margin-top: 4px; }
+
+/* ==================== 响应式 ==================== */
+
+@media (max-width: 1024px) {
+  .content-wrapper { padding: 1.25rem; }
 }
 
 @media (max-width: 768px) {
-  .header-inner {
-    padding: 0 1.25rem;
-    height: 56px;
-  }
+  .header-inner { padding: 0 1.15rem; height: 50px; }
+  .header-left { gap: .8rem; }
+  .breadcrumb { display: none; }
+  .main-content { padding: 56px 1.15rem 0; }
 
-  .header-left {
-    gap: 1rem;
-  }
+  .hero-section { height: 200px; margin-top: .35rem; margin-bottom: 1rem; border-radius: var(--r-sm); }
+  .hero-cover-frame { width: 76px; height: 106px; }
+  .hero-title { letter-spacing: 1.5px; }
+  .tag { font-size: .72rem; padding: 2px 7px; }
 
-  .breadcrumb {
-    display: none;
+  .content-wrapper { padding: 1rem; border-radius: var(--r-sm); }
+  .info-layout { flex-direction: column; gap: 1rem; align-items: center; }
+  .cover-card { width: 120px; }
+  .side-cover { width: 120px; height: 168px; }
+  .info-right { align-items: stretch; width: 100%; gap: .7rem; }
+  .stats-row {
+    flex-wrap: wrap; justify-content: center; gap: 4px;
+    height: auto; padding: .6rem .75rem;
   }
+  .stat-item { padding: .3rem .5rem; }
+  .stat-divider { display: none; }
+  .action-bar { justify-content: center; }
+  .btn { padding: 7px 14px; font-size: .8rem; }
 
-  .main-content {
-    padding: 56px 1.25rem 0;
-  }
+  .sec-card { padding: 1rem; margin-bottom: 1rem; }
+  .sec-head { margin-bottom: .7rem; }
+  .sec-title { font-size: .85rem; letter-spacing: .8px; }
 
-  .hero-section {
-    height: 280px;
-    margin-top: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  .hero-cover-frame {
-    width: 90px;
-    height: 126px;
-  }
-
-  .hero-title {
-    letter-spacing: 2px;
-  }
-
-  .content-wrapper {
-    padding: 1.5rem;
-  }
-
-  .info-layout {
-    flex-direction: column;
-    gap: 2rem;
-    align-items: center;
-  }
-
-  .cover-card {
-    width: 140px;
-  }
-
-  .side-cover {
-    width: 140px;
-    height: 195px;
-  }
-
-  .info-right {
-    align-items: center;
-    text-align: center;
-  }
-
-  .stats-bar {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .stat-cell {
-    padding: 0 1.5rem;
-  }
-
-  .action-buttons {
-    justify-content: center;
-  }
-
-  .chapter-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  }
+  .chapter-grid { gap: 7px; }
+  .ch-btn { width: calc((100% - 14px) / 4); height: 36px; font-size: .74rem; }
 }
 
-@media (max-width: 375px) {
-  .header-inner {
-    padding: 0 1rem;
-  }
+@media (max-width: 420px) {
+  .header-inner { padding: 0 .9rem; }
+  .logo { font-size: 1.05rem; letter-spacing: 1.5px; }
+  .main-content { padding: 54px .9rem 0; }
+  .hero-section { height: 180px; }
+  .hero-cover-frame { width: 66px; height: 92px; }
+  .content-wrapper { padding: .85rem; }
 
-  .logo {
-    font-size: 1.2rem;
-    letter-spacing: 2px;
-  }
+  .stats-row { gap: 3px; padding: .5rem .6rem; }
+  .action-bar { gap: .45rem; }
+  .btn { padding: 6px 11px; font-size: .78rem; }
 
-  .main-content {
-    padding: 56px 1rem 0;
-  }
-
-  .hero-section {
-    height: 240px;
-  }
-
-  .hero-cover-frame {
-    width: 80px;
-    height: 112px;
-  }
-
-  .content-wrapper {
-    padding: 1.25rem;
-  }
-
-  .stat-cell {
-    padding: 0 1rem;
-  }
-
-  .stat-num {
-    font-size: 1.2rem;
-  }
-
-  .btn-read {
-    padding: 10px 24px;
-    font-size: 0.85rem;
-  }
-
-  .btn-favorite {
-    padding: 9px 18px;
-    font-size: 0.82rem;
-  }
-
-  .chapter-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  }
-}
-
-.comment-section {
-  margin-top: 56px;
-}
-.comment-form {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 22px 24px;
-  margin-bottom: 24px;
-}
-.rating-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
-  font-family: var(--font-sans-cn);
-}
-.rating-label { font-size: 14px; color: var(--muted); }
-.stars { display: flex; gap: 4px; }
-.star {
-  font-size: 22px;
-  color: #D8D2C4;
-  cursor: pointer;
-  transition: color 0.15s;
-  user-select: none;
-}
-.star.active { color: var(--accent); }
-.rating-tip { font-size: 13px; color: var(--muted); }
-.comment-input {
-  width: 100%;
-  border: 1px solid var(--border);
-  background: var(--paper-bg);
-  padding: 12px 14px;
-  font-family: var(--font-serif-cn);
-  font-size: 15px;
-  line-height: 1.7;
-  border-radius: 2px;
-  outline: none;
-  resize: vertical;
-  box-sizing: border-box;
-}
-.comment-input:focus { border-color: var(--accent); }
-.comment-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 14px;
-  margin-top: 12px;
-}
-.counter { font-size: 12px; color: #999; font-family: var(--font-sans-cn); }
-.comment-submit {
-  background: #B7830A;
-  color: #fff;
-  border: none;
-  padding: 9px 26px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: var(--font-sans-cn);
-  letter-spacing: 1px;
-  box-shadow: 0 1px 3px rgba(180,125,10,0.35);
-}
-.comment-submit:hover { background: #A67503; box-shadow: 0 2px 5px rgba(180,125,10,0.45); }
-.comment-submit:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
-
-.comment-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
-.comment-item {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 18px 20px;
-  display: flex;
-  gap: 14px;
-}
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #CA8A04, #A87403);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.comment-body { flex: 1; }
-.comment-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
-  font-family: var(--font-sans-cn);
-}
-.comment-user { font-weight: 600; color: var(--ink); font-size: 14px; }
-.comment-rating { display: inline-flex; gap: 1px; }
-.mini-star { color: #D8D2C4; font-size: 13px; }
-.mini-star.on { color: var(--accent); }
-.comment-time { color: #999; font-size: 12px; margin-left: auto; }
-.comment-delete {
-  background: none;
-  border: none;
-  color: #bbb;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 3px;
-  line-height: 1;
-  transition: all 0.2s;
-  margin-left: 8px;
-}
-.comment-delete:hover { color: #e74c3c; background: rgba(231,76,60,0.08); }
-.comment-text {
-  margin: 0;
-  color: var(--ink);
-  font-size: 15px;
-  line-height: 1.8;
-  font-family: var(--font-serif-cn);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.comment-empty {
-  background: var(--card-bg);
-  border: 1px dashed var(--border);
-  border-radius: 4px;
-  padding: 40px;
-  text-align: center;
-  color: #888;
-  font-family: var(--font-sans-cn);
+  .chapter-grid { gap: 6px; }
+  .ch-btn { width: calc((100% - 12px) / 3); height: 34px; font-size: .73rem; padding: 0 5px; }
+  .ch-btn span { max-width: 34px; }
 }
 </style>

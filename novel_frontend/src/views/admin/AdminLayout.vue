@@ -10,10 +10,13 @@ const activeMenu = computed(() => route.path)
 
 const menuItems = [
   { index: '/admin', title: '仪表盘', icon: 'Odometer' },
-  { index: '/admin/advertisements', title: '广告管理', icon: 'Promotion' },
-  { index: '/admin/announcements', title: '公告管理', icon: 'Bell' },
   { index: '/admin/books', title: '书籍管理', icon: 'Notebook' },
   { index: '/admin/review', title: '新书审核', icon: 'Select' },
+  { index: '/admin/checkins', title: '签到管理', icon: 'Calendar' },
+  { index: '/admin/orders', title: '充值订单', icon: 'Wallet' },
+  { index: '/admin/followers', title: '粉丝管理', icon: 'UserFilled' },
+  { index: '/admin/advertisements', title: '广告管理', icon: 'Promotion' },
+  { index: '/admin/announcements', title: '公告管理', icon: 'Bell' },
   { index: '/admin/categories', title: '分类管理', icon: 'FolderOpened' },
 ]
 

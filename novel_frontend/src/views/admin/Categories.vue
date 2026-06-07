@@ -36,6 +36,7 @@ const editForm = reactive({
 })
 
 const formRef = ref<FormInstance>()
+const dialogFormRef = ref<FormInstance>()
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
 const editingId = ref<number | null>(null)
@@ -131,8 +132,9 @@ async function fetchTree() {
     const res = await fetch('/api/admin/categories/tree/', { method: 'GET' })
     const data = await res.json()
     treeData.value = data || []
-  } catch {
-    treeData.value = generateMockTree()
+  } catch (e) {
+    console.error('加载分类树失败:', e)
+    treeData.value = []
   } finally {
     loading.value = false
     updateStats()
@@ -182,7 +184,7 @@ function openCreateDialog(parentId?: number) {
     is_active: true,
   })
   dialogVisible.value = true
-  nextTick(() => formRef.value?.clearValidate())
+  nextTick(() => dialogFormRef.value?.clearValidate())
 }
 
 function openEditDialog(node: CategoryNode) {
@@ -197,12 +199,12 @@ function openEditDialog(node: CategoryNode) {
     is_active: node.is_active,
   })
   dialogVisible.value = true
-  nextTick(() => formRef.value?.clearValidate())
+  nextTick(() => dialogFormRef.value?.clearValidate())
 }
 
 async function handleSubmit() {
-  if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
+  if (!dialogFormRef.value) return
+  await dialogFormRef.value.validate(async (valid) => {
     if (!valid) return
     try {
       if (editingId.value) {
@@ -225,7 +227,8 @@ async function handleSubmit() {
       if (selectedNode.value) {
         handleNodeClick(findNodeById(treeData.value, selectedNode.value.id) || selectedNode.value)
       }
-    } catch {
+    } catch (e) {
+      console.error('保存分类失败:', e)
       ElMessage.error(editingId.value ? '更新失败' : '创建失败')
     }
   })
@@ -411,7 +414,7 @@ onMounted(() => {
 
           <div class="panel-actions">
             <el-button @click="openEditDialog(selectedNode!)" type="primary" :icon="Edit">
-              保存修改
+              在弹窗中编辑
             </el-button>
           </div>
         </div>
@@ -474,7 +477,7 @@ onMounted(() => {
       destroy-on-close
     >
       <el-form
-        ref="formRef"
+        ref="dialogFormRef"
         :model="editForm"
         label-position="top"
         class="dialog-form"

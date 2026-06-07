@@ -19,8 +19,6 @@ interface AdminNovel {
   word_count: number; view_count: number; recommend: number
   chapter_count?: number; comment_count?: number
   created_at: string; updated_at: string
-  is_adapted: boolean; is_recommended: boolean
-  recommend_comment: string; topic_tag: string
 }
 
 const CATEGORIES = ['玄幻', '都市', '穿越', '科幻', '游戏', '悬疑', '武侠', '历史']
@@ -80,10 +78,6 @@ const editForm = reactive({
   description: '',
   status: 0,
   cover: '',
-  is_adapted: false,
-  is_recommended: false,
-  recommend_comment: '',
-  topic_tag: '',
 })
 
 const editRules: FormRules = {
@@ -226,14 +220,10 @@ function openEditDialog(row?: AdminNovel) {
       description: row.description,
       status: row.status,
       cover: row.cover,
-      is_adapted: !!row.is_adapted,
-      is_recommended: !!row.is_recommended,
-      recommend_comment: row.recommend_comment || '',
-      topic_tag: row.topic_tag || '',
     })
   } else {
     editingBook.value = null
-    Object.assign(editForm, { title: '', author: '', category: '', tags: '', description: '', status: 0, cover: '', is_adapted: false, is_recommended: false, recommend_comment: '', topic_tag: '' })
+    Object.assign(editForm, { title: '', author: '', category: '', tags: '', description: '', status: 0, cover: '' })
   }
   activeEditTab.value = 'basic'
   editDialogVisible.value = true
@@ -580,18 +570,19 @@ const hasActiveFilters = computed(() => {
         </el-table-column>
 
         <!-- Actions -->
-        <el-table-column label="操作" width="160" align="center" fixed="right" class-name="action-col">
+        <el-table-column label="操作" width="70" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" plain @click="openEditDialog(row)">
-              <el-icon :size="13"><Edit /></el-icon>编辑
-            </el-button>
             <el-dropdown trigger="click" class="action-dropdown">
               <el-button link class="dropdown-trigger">
                 <el-icon :size="16"><SetUp /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu class="dark-dropdown-menu">
-                  <el-dropdown-item @click="handleAuditAction(row.id, 2)" v-if="row.audit_status !== 2">
+                  <el-dropdown-item @click="openEditDialog(row)">
+                    <el-icon><Edit /></el-icon>
+                    <span>编辑信息</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleAuditAction(row.id, 2)" divided v-if="row.audit_status !== 2">
                     <el-icon style="color:#22C55E"><CircleCheck /></el-icon>
                     <span style="color:#22C55E">审核通过</span>
                   </el-dropdown-item>
@@ -747,44 +738,6 @@ const hasActiveFilters = computed(() => {
                 </el-form-item>
               </el-col>
             </el-row>
-
-            <!-- 首页展示配置 -->
-            <el-divider content-position="left">
-              <span style="font-size:13px;color:#999">首页展示配置</span>
-            </el-divider>
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="专题标签">
-                  <el-select v-model="editForm.topic_tag" placeholder="选择专题（留空不参与）" clearable class="full-width" popper-class="dark-select-dropdown">
-                    <el-option value="女频专题" label="女频专题" />
-                    <el-option value="男频专题" label="男频专题" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="影视改编">
-                  <el-switch v-model="editForm.is_adapted"
-                    active-text="是" inactive-text="否"
-                    style="--el-switch-on-color: #E91E63;" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="总编推荐">
-                  <el-switch v-model="editForm.is_recommended"
-                    active-text="推荐" inactive-text="不推荐"
-                    style="--el-switch-on-color: #C0392B;" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12" v-if="editForm.is_recommended">
-                <el-form-item label="推荐评语">
-                  <el-input v-model="editForm.recommend_comment" type="textarea" :rows="2"
-                    placeholder="总编推荐评语..." maxlength="200" show-word-limit />
-                </el-form-item>
-              </el-col>
-            </el-row>
-
           </el-form>
         </el-tab-pane>
         <el-tab-pane label="数据统计" name="stats">
@@ -1418,18 +1371,6 @@ const hasActiveFilters = computed(() => {
 .time-cell {
   color: #64748B;
   font-weight: 400;
-}
-
-/* Action Column - ensure button visible */
-:deep(.action-col) {
-  overflow: visible !important;
-}
-:deep(.action-col .cell) {
-  overflow: visible !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 4px !important;
 }
 
 /* Action Dropdown */

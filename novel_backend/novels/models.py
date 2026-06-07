@@ -88,6 +88,7 @@ class User(AbstractUser):
     is_author = models.BooleanField(default=False, verbose_name='是否作者')
     pen_name = models.CharField(max_length=50, blank=True, default='', verbose_name='笔名')
     bio = models.CharField(max_length=200, blank=True, default='', verbose_name='作者简介')
+    coins = models.IntegerField(default=0, verbose_name='虚拟币余额')
     qq_openid = models.CharField(max_length=64, blank=True, default='', verbose_name='QQ OpenID', db_index=True)
     wechat_openid = models.CharField(max_length=64, blank=True, default='', verbose_name='微信OpenID', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='注册时间')
@@ -126,11 +127,6 @@ class Novel(models.Model):
     word_count = models.IntegerField(default=0, verbose_name='总字数')
     view_count = models.IntegerField(default=0, verbose_name='阅读量')
     recommend = models.IntegerField(default=0, verbose_name='推荐票')
-    is_adapted = models.BooleanField(default=False, verbose_name='影视改编')
-    is_recommended = models.BooleanField(default=False, verbose_name='总编推荐')
-    recommend_comment = models.TextField(blank=True, default='', verbose_name='总编评语')
-    topic_tag = models.CharField(max_length=20, blank=True, default='', verbose_name='专题标签',
-                                  help_text='女频专题/男频专题/空表示不参与专题')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
@@ -360,85 +356,93 @@ class ChapterUploadLog(models.Model):
         ordering = ['-created_at']
 
 
-class SigninReward(models.Model):
-    """每日签到奖励配置"""
-    day = models.IntegerField(unique=True, verbose_name='连续签到天数')
-    coins = models.IntegerField(default=10, verbose_name='奖励币数')
-    extra_coins = models.IntegerField(default=0, verbose_name='额外奖励(连续签到)')
-    is_active = models.BooleanField(default=True, verbose_name='是否启用')
+# ── 签到模块 ──
+
+class CheckInConfig(models.Model):
+    """签到奖励配置（全局单例）"""
+    daily_reward = models.IntegerField(default=10, verbose_name='每日签到奖励币数')
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'signin_reward'
-        ordering = ['day']
-        verbose_name = '签到奖励配置'
-        verbose_name_plural = '签到奖励配置'
+        db_table = 'checkin_config'
 
-    def __str__(self):
-        return f'第{self.day}天 +{self.coins}币'
+    @classmethod
+    def get_config(cls):
+        obj, _ = cls.objects.get_or_create(id=1, defaults={'daily_reward': 10})
+        return obj
 
 
-class SigninRecord(models.Model):
+class CheckIn(models.Model):
     """用户签到记录"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='signin_records', verbose_name='用户')
-    signin_date = models.DateField(verbose_name='签到日期')
-    coins_earned = models.IntegerField(default=10, verbose_name='获得币数')
-    consecutive_days = models.IntegerField(default=1, verbose_name='连续天数')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='checkins')
+    check_date = models.DateField(verbose_name='签到日期')
+    reward_coins = models.IntegerField(default=0, verbose_name='获得虚拟币')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='签到时间')
 
     class Meta:
-        db_table = 'signin_record'
-        unique_together = ['user', 'signin_date']
-        ordering = ['-signin_date']
-        verbose_name = '签到记录'
-        verbose_name_plural = '签到记录'
+        db_table = 'checkin'
+        unique_together = ['user', 'check_date']
+        ordering = ['-check_date']
 
 
-class RechargePlan(models.Model):
-    """充值套餐"""
-    PLAN_CHOICES = [
-        ('monthly', '月卡'),
-        ('quarterly', '季卡'),
-        ('yearly', '年卡'),
-    ]
-    name = models.CharField(max_length=50, verbose_name='套餐名称')
-    plan_type = models.CharField(max_length=20, choices=PLAN_CHOICES, verbose_name='套餐类型')
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='价格(元)')
-    days = models.IntegerField(verbose_name='会员天数')
-    is_active = models.BooleanField(default=True, verbose_name='是否上架')
-    sort_order = models.IntegerField(default=0, verbose_name='排序')
-    description = models.CharField(max_length=200, blank=True, default='', verbose_name='描述')
-    created_at = models.DateTimeField(auto_now_add=True)
+# ── 会员充值模块 ──
 
-    class Meta:
-        db_table = 'recharge_plan'
-        ordering = ['sort_order', 'price']
-        verbose_name = '充值套餐'
-        verbose_name_plural = '充值套餐'
-
-    def __str__(self):
-        return f'{self.name} ¥{self.price}'
+MEMBERSHIP_PLAN_CHOICES = [
+    ('monthly', '月卡'),
+    ('quarterly', '季卡'),
+    ('yearly', '年卡'),
+]
+ORDER_STATUS_CHOICES = [
+    ('pending', '待支付'),
+    ('paid', '已支付'),
+    ('expired', '已过期'),
+    ('cancelled', '已取消'),
+]
 
 
-class RechargeOrder(models.Model):
-    """充值订单"""
-    STATUS_CHOICES = [
-        ('pending', '待支付'),
-        ('paid', '已支付'),
-        ('expired', '已过期'),
-        ('refunded', '已退款'),
-    ]
-    order_no = models.CharField(max_length=64, unique=True, verbose_name='订单号')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recharge_orders', verbose_name='用户')
-    plan = models.ForeignKey(RechargePlan, on_delete=models.PROTECT, related_name='orders', verbose_name='套餐')
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='金额')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
-    pay_time = models.DateTimeField(null=True, blank=True, verbose_name='支付时间')
+class MembershipOrder(models.Model):
+    """会员充值订单"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='membership_orders')
+    order_no = models.CharField(max_length=32, unique=True, verbose_name='订单号')
+    plan_type = models.CharField(max_length=20, choices=MEMBERSHIP_PLAN_CHOICES, verbose_name='套餐类型')
+    amount = models.DecimalField(max_digits=8, decimal_places=2, verbose_name='金额(元)')
+    status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending', verbose_name='状态')
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name='支付时间')
     expire_at = models.DateTimeField(null=True, blank=True, verbose_name='会员到期时间')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    paid_at = models.DateTimeField(null=True, blank=True, verbose_name='支付时间')
 
     class Meta:
-        db_table = 'recharge_order'
+        db_table = 'membership_order'
         ordering = ['-created_at']
-        verbose_name = '充值订单'
-        verbose_name_plural = '充值订单'
+
+
+class UserFollow(models.Model):
+    """用户关注作者"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follows', verbose_name='用户')
+    author_name = models.CharField(max_length=50, verbose_name='作者名')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='关注时间')
+
+    class Meta:
+        db_table = 'user_follow'
+        unique_together = [['user', 'author_name']]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user.username} 关注 {self.author_name}'
+
+
+class NovelRating(models.Model):
+    """小说评分"""
+    novel = models.ForeignKey('Novel', on_delete=models.CASCADE, related_name='ratings', verbose_name='小说')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ratings', verbose_name='用户')
+    score = models.PositiveSmallIntegerField(verbose_name='评分(1-5)')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='评分时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'novel_rating'
+        unique_together = [['user', 'novel']]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user.username} 给《{self.novel.title}》评了 {self.score} 分'

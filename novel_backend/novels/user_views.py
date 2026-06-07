@@ -4,10 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import login, logout
-from django.utils import timezone
 from django.shortcuts import redirect
 
-from .models import User, AdminUser, Favorite, ReadingProgress, Bookmark, SigninRecord, SigninReward, RechargePlan, RechargeOrder
+from .models import User, AdminUser, Favorite, ReadingProgress, Bookmark
 from .user_serializers import (
     UserSerializer,
     UserRegistrationSerializer,
@@ -18,9 +17,6 @@ from .user_serializers import (
     AdminLoginSerializer,
     AdminUserSerializer,
     SendCodeSerializer,
-    SigninRecordSerializer,
-    RechargePlanSerializer,
-    RechargeOrderSerializer,
 )
 from .oauth_utils import (
     get_qq_auth_url, get_qq_access_token, get_qq_openid, get_qq_userinfo,
@@ -467,183 +463,3 @@ class BookmarkViewSet(viewsets.ModelViewSet):
         if bookmark:
             return Response(BookmarkSerializer(bookmark).data)
         return Response({'message': '暂无书签'}, status=status.HTTP_404_NOT_FOUND)
-
-
-# ══════════════════════════════════════
-#  签到功能
-# ══════════════════════════════════════
-class SigninViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
-    @action(detail=False, methods=['post'])
-    def do_signin(self, request):
-        """执行签到"""
-        from .auth import AdminUser
-        if isinstance(request.user, AdminUser):
-            return Response({'message': '管理员无需签到'}, status=403)
-
-        today = timezone.now().date()
-        # 检查今日是否已签到
-        if SigninRecord.objects.filter(user=request.user, signin_date=today).exists():
-            return Response({'message': '今日已签到，请明天再来', 'already_signed': True}, status=400)
-
-        # 计算连续天数
-        yesterday = today - timezone.timedelta(days=1)
-        last_record = SigninRecord.objects.filter(
-            user=request.user, signin_date__lte=today
-        ).order_by('-signin_date').first()
-
-        consecutive = 1
-        if last_record:
-            if last_record.signin_date == yesterday:
-                consecutive = last_record.consecutive_days + 1
-            else:
-                consecutive = 1
-
-        # 获取奖励配置
-        reward_config = SigninReward.objects.filter(
-            day__lte=consecutive, is_active=True
-        ).order_by('-day').first() or SigninReward.objects.filter(day=1, is_active=True).first()
-
-        coins = reward_config.coins if reward_config else 10
-
-        # 创建签到记录
-        record = SigninRecord.objects.create(
-            user=request.user,
-            signin_date=today,
-            coins_earned=coins,
-            consecutive_days=consecutive,
-        )
-
-        # 更新用户币数（用 User 的某个字段，这里暂存到 session 或直接返回）
-        return Response({
-            'message': '签到成功',
-            'coins_earned': coins,
-            'consecutive_days': consecutive,
-            'record': SigninRecordSerializer(record).data,
-        })
-
-    @action(detail=False, methods=['get'])
-    def status(self, request):
-        """获取签到状态"""
-        from .auth import AdminUser
-        if isinstance(request.user, AdminUser):
-            return Response({'is_signed_today': False, 'consecutive_days': 0, 'total_count': 0})
-
-        today = timezone.now().date()
-        is_signed = SigninRecord.objects.filter(
-            user=request.user, signin_date=today
-        ).exists()
-
-        # 连续天数：从今天往前数连续签到
-        records = list(SigninRecord.objects.filter(
-            user=request.user
-        ).order_by('-signin_date')[:30])
-
-        consecutive = 0
-        check_date = today
-        for r in records:
-            if r.signin_date == check_date:
-                consecutive += 1
-                check_date -= timezone.timedelta(days=1)
-            elif r.signin_date == check_date - timezone.timedelta(days=1):
-                break
-            else:
-                break
-
-        total = SigninRecord.objects.filter(user=request.user).count()
-        recent_records = SigninRecordSerializer(
-            SigninRecord.objects.filter(user=request.user)[:30], many=True
-        ).data
-
-        return Response({
-            'is_signed_today': is_signed,
-            'consecutive_days': consecutive,
-            'total_count': total,
-            'recent_records': recent_records,
-        })
-
-
-# ══════════════════════════════════════
-#  充值会员功能
-# ══════════════════════════════════════
-class RechargeViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
-    def list(self, request):
-        """获取充值套餐列表"""
-        plans = RechargePlan.objects.filter(is_active=True)
-        return Response(RechargePlanSerializer(plans, many=True).data)
-
-    @action(detail=False, methods=['post'])
-    def create_order(self, request):
-        """创建充值订单"""
-        from .auth import AdminUser
-        if isinstance(request.user, AdminUser):
-            return Response({'message': '管理员无法充值'}, status=403)
-
-        plan_id = request.data.get('plan_id')
-        try:
-            plan = RechargePlan.objects.get(id=plan_id, is_active=True)
-        except (RechargePlan.DoesNotExist, ValueError):
-            return Response({'message': '无效的套餐'}, status=400)
-
-        import uuid, time
-        order_no = f"MO{int(time.time())}{uuid.uuid4().hex[:8].upper()}"
-
-        now = timezone.now()
-        expire_at = None
-        if request.user.vip_expire_date and request.user.vip_expire_date > now:
-            expire_at = request.user.vip_expire_date + timezone.timedelta(days=plan.days)
-        else:
-            expire_at = now + timezone.timedelta(days=plan.days)
-
-        order = RechargeOrder.objects.create(
-            order_no=order_no,
-            user=request.user,
-            plan=plan,
-            amount=plan.price,
-            status='paid',  # 演示模式：自动标记为已支付
-            paid_at=now,
-            expire_at=expire_at,
-        )
-
-        # 更新用户会员状态
-        request.user.is_vip = True
-        request.user.vip_expire_date = expire_at
-        request.user.save(update_fields=['is_vip', 'vip_expire_date'])
-
-        return Response({
-            'message': '充值成功，已开通会员',
-            'order': RechargeOrderSerializer(order).data,
-            'vip_expire_date': expire_at.isoformat() if expire_at else None,
-        })
-
-    @action(detail=False, methods=['get'])
-    def my_orders(self, request):
-        """我的充值订单"""
-        orders = RechargeOrder.objects.filter(user=request.user)
-        return Response(RechargeOrderSerializer(orders, many=True).data)
-
-    @action(detail=False, methods=['get'])
-    def vip_status(self, request):
-        """查询会员状态"""
-        from .auth import AdminUser
-        if isinstance(request.user, AdminUser):
-            return Response({'is_vip': True, 'expire_date': None, 'is_admin': True})
-
-        is_vip = False
-        expire_str = None
-        if request.user.is_vip and request.user.vip_expire_date:
-            if request.user.vip_expire_date > timezone.now():
-                is_vip = True
-                expire_str = request.user.vip_expire_date.strftime('%Y-%m-%d %H:%M')
-            else:
-                # 过期了，自动关闭
-                request.user.is_vip = False
-                request.user.save(update_fields=['is_vip'])
-
-        return Response({
-            'is_vip': is_vip,
-            'expire_date': expire_str,
-        })

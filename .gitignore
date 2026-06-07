@@ -62,3 +62,22 @@ Desktop.ini
 test_*.py
 gen_covers.py
 generate_covers.py
+
+# Debug/temp scripts
+debug_*.py
+check_*.py
+fix_*.py
+deep_check.py
+batch_fix_*.py
+image_quality_check.py
+api_check.py
+
+# Build artifacts / temp dirs
+CopyBook/
+CopyBook.zip
+design-system/
+generate-ppt.js
+task_plan.md
+
+# PDF docs
+*.pdf

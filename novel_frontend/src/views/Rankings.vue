@@ -7,6 +7,7 @@
           <router-link to="/">首页</router-link>
           <router-link to="/novels">书库</router-link>
           <router-link to="/rankings">排行榜</router-link>
+          <router-link to="/author">创作</router-link>
         </nav>
         <div class="rk-header__actions">
           <div class="rk-header__search">
@@ -85,9 +86,9 @@
               </div>
               <div class="rk-podium-card__cover">
                 <img
-                  v-lazy="novel.cover"
+                  v-lazy="novel.cover || defaultCover"
                   :alt="novel.title"
-                  @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'"
+                  @error="onCoverError"
                 />
                 <div class="rk-podium-card__vignette"></div>
               </div>
@@ -195,6 +196,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { novelApi } from '../api'
+import { DEFAULT_COVER } from '../utils/image'
+
+const defaultCover = DEFAULT_COVER
+const onCoverError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  if (img.src !== defaultCover) img.src = defaultCover
+}
 
 const router = useRouter()
 

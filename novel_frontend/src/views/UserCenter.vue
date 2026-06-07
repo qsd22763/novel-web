@@ -64,8 +64,8 @@
             v-for="tab in tabList"
             :key="tab.name"
             class="uc-sidenav__item"
-            :class="{ active: !tab.isLink && activeTab === tab.name }"
-            @click="tab.isLink ? router.push(tab.linkTo) : (activeTab = tab.name)"
+            :class="{ active: activeTab === tab.name }"
+            @click="tab.external ? router.push(tab.path) : (activeTab = tab.name)"
           >
             <span class="uc-sidenav__icon" v-html="tab.svg"></span>
             <span class="uc-sidenav__label">{{ tab.label }}</span>
@@ -95,6 +95,10 @@
               <div class="uc-info-row">
                 <span class="uc-info__label">邮　箱</span>
                 <span class="uc-info__value" :class="{ 'is-empty': !userInfo.email }">{{ userInfo.email || '未设置' }}</span>
+              </div>
+              <div class="uc-info-row">
+                <span class="uc-info__label">手机号</span>
+                <span class="uc-info__value" :class="{ 'is-empty': !userInfo.phone }">{{ userInfo.phone || '未设置' }}</span>
               </div>
               <div class="uc-info-row">
                 <span class="uc-info__label">注册时间</span>
@@ -188,9 +192,9 @@
                 <div class="uc-timeline__card" @click="continueReading(item)">
                   <div class="uc-tl__cover">
                     <img
-                      v-lazy="item.novel_cover || 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'"
+                      v-lazy="item.novel_cover || defaultCover"
                       :alt="item.novel_title"
-                      @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'"
+                      @error="onCoverError"
                     />
                   </div>
                   <div class="uc-tl__body">
@@ -347,7 +351,14 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { authApi } from '../api'
+import { DEFAULT_COVER } from '../utils/image'
 import request from '../utils/request'
+
+const defaultCover = DEFAULT_COVER
+const onCoverError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  if (img.src !== defaultCover) img.src = defaultCover
+}
 
 const router = useRouter()
 const activeTab = ref('profile')
@@ -378,8 +389,9 @@ const tabList = [
   { name: 'favorites', label: '我的书架', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>' },
   { name: 'history', label: '阅读记录', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>' },
   { name: 'bookmarks', label: '我的书签', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>' },
-  { name: 'signin', label: '每日签到', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>', isLink: true, linkTo: '/user/signin' },
-  { name: 'recharge', label: '会员充值', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>', isLink: true, linkTo: '/user/recharge' },
+  { name: 'follows', label: '我的关注', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>', external: true, path: '/user/follows' },
+  { name: 'checkin', label: '每日签到', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>', external: true, path: '/user/checkin' },
+  { name: 'membership', label: '充值会员', svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>', external: true, path: '/user/membership' },
 ]
 
 const showEditDialog = () => {

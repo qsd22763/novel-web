@@ -1,8 +1,7 @@
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q, F, Count, Avg, IntegerField, Max
-from django.db.models.functions import Coalesce
+from django.db.models import Q, F, Count, Avg
 
 from .models import Novel, Chapter
 from .serializers import (
@@ -96,88 +95,6 @@ class NovelViewSet(viewsets.ReadOnlyModelViewSet):
         for cat in categories:
             stats[cat] = Novel.objects.filter(category=cat).count()
         return Response(stats)
-
-    @action(detail=False, methods=['get'])
-    def home_data(self, request):
-        """首页聚合数据：一次性返回12个分区，减少前端请求次数"""
-        base_qs = Novel.objects.filter(audit_status=2).exclude(status=2)
-        s = NovelListSerializer
-
-        # 1. 轮播Banner（推荐/高阅读量书籍，取5本）
-        banner = list(base_qs.order_by('-view_count')[:5])
-
-        # 2. 四大榜单（各TOP10）
-        # 女频分类：穿越/悬疑/都市/历史；男频分类：玄幻/武侠/科幻/游戏
-        FEMALE_CATS = ['穿越', '悬疑', '都市', '历史']
-        MALE_CATS = ['玄幻', '武侠', '科幻', '游戏']
-
-        hot_female = list(base_qs.filter(category__in=FEMALE_CATS)
-                          .annotate(hot_score=Coalesce('view_count', 0, output_field=IntegerField()) +
-                                     Coalesce('recommend', 0, output_field=IntegerField()))
-                          .order_by('-hot_score')[:10])
-        hot_male = list(base_qs.filter(category__in=MALE_CATS)
-                        .annotate(hot_score=Coalesce('view_count', 0, output_field=IntegerField()) +
-                                   Coalesce('recommend', 0, output_field=IntegerField()))
-                        .order_by('-hot_score')[:10])
-        new_female = list(base_qs.filter(category__in=FEMALE_CATS)
-                         .order_by('-created_at')[:10])
-        new_male = list(base_qs.filter(category__in=MALE_CATS)
-                       .order_by('-created_at')[:10])
-
-        # 3. 男女频专题
-        female_topic = list(base_qs.filter(topic_tag='女频专题').order_by('-view_count')[:15])
-        male_topic = list(base_qs.filter(topic_tag='男频专题').order_by('-view_count')[:15])
-
-        # 4. 影视改编专区
-        adapted = list(base_qs.filter(is_adapted=True).order_by('-view_count')[:10])
-
-        # 5. 总编推荐
-        recommended = list(base_qs.filter(is_recommended=True).order_by('-updated_at')[:3])
-
-        # 6. 四大分类快捷栏
-        quick_cats = ['穿越', '玄幻', '都市', '武侠']
-        quick_cat_data = {}
-        for cat in quick_cats:
-            quick_cat_data[cat] = s(list(base_qs.filter(category=cat).order_by('-view_count')[:4]), many=True).data
-
-        # 7. 签约新书（近期审核通过）
-        signed_new = list(base_qs.order_by('-created_at')[:18])
-
-        # 8. 最近更新（按章节更新时间倒序）
-        recent_updated = list(
-            base_qs.annotate(last_chapter_time=Max('chapters__created_at'))
-            .exclude(last_chapter_time=None)
-            .order_by('-last_chapter_time')[:20]
-        )
-
-        # 9. 完结榜单
-        finished_female = list(base_qs.filter(status=1, category__in=FEMALE_CATS)
-                               .order_by('-view_count')[:10])
-        finished_male = list(base_qs.filter(status=1, category__in=MALE_CATS)
-                             .order_by('-view_count')[:10])
-
-        return Response({
-            'banner': s(banner, many=True).data,
-            'rankings': {
-                'hot_female': s(hot_female, many=True).data,
-                'hot_male': s(hot_male, many=True).data,
-                'new_female': s(new_female, many=True).data,
-                'new_male': s(new_male, many=True).data,
-            },
-            'topics': {
-                'female': s(female_topic, many=True).data,
-                'male': s(male_topic, many=True).data,
-            },
-            'adapted': s(adapted, many=True).data,
-            'recommended': s(recommended, many=True).data,
-            'quick_categories': quick_cat_data,
-            'signed_new': s(signed_new, many=True).data,
-            'recent_updated': s(recent_updated, many=True).data,
-            'finished': {
-                'female': s(finished_female, many=True).data,
-                'male': s(finished_male, many=True).data,
-            },
-        })
 
 
 class ChapterViewSet(viewsets.ReadOnlyModelViewSet):

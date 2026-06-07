@@ -14,7 +14,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from django.http import HttpResponse
 
-from .models import Advertisement, Announcement, Novel, OperationLog, BookCategory, ViolationRecord, ChapterUploadLog, Chapter
+from .models import Advertisement, Announcement, Novel, OperationLog, BookCategory, ViolationRecord, ChapterUploadLog, Chapter, CheckIn, CheckInConfig, MembershipOrder
 from django.contrib.auth import get_user_model
 from .models import Favorite, ReadingProgress, Bookmark, Comment
 
@@ -30,6 +30,7 @@ from .admin_serializers import (
     AdvertisementStatsSerializer,
     AdminChapterSerializer,
 )
+from .user_serializers import CheckInSerializer, MembershipOrderSerializer
 
 
 class AdminAdvertisementViewSet(viewsets.ModelViewSet):
@@ -651,4 +652,106 @@ class DashboardStatsView(APIView):
             'ad_stats': ad_stats,
             'status_breakdown': status_breakdown,
             'audit_breakdown': audit_breakdown,
+        })
+
+
+class AdminCheckInViewSet(viewsets.ReadOnlyModelViewSet):
+    """管理后台-签到记录管理"""
+    queryset = CheckIn.objects.select_related('user').all()
+    serializer_class = CheckInSerializer
+    permission_classes = [IsAuthenticated, IsAdminUserOrStaff]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['user__username']
+    ordering = ['-check_date']
+
+    def get_queryset(self):
+        queryset = CheckIn.objects.select_related('user').all()
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        if date_from:
+            try:
+                queryset = queryset.filter(check_date__gte=date_from)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                queryset = queryset.filter(check_date__lte=date_to)
+            except ValueError:
+                pass
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """签到统计"""
+        today = timezone.now().date()
+        today_count = CheckIn.objects.filter(check_date=today).count()
+        total_count = CheckIn.objects.count()
+        unique_users = CheckIn.objects.values('user').distinct().count()
+        config = CheckInConfig.get_config()
+
+        # 近7天每日签到人数
+        weekly = []
+        for i in range(7):
+            d = today - timedelta(days=6-i)
+            count = CheckIn.objects.filter(check_date=d).count()
+            weekly.append({'date': d.strftime('%m-%d'), 'count': count})
+
+        return Response({
+            'today_checkins': today_count,
+            'total_checkins': total_count,
+            'unique_users': unique_users,
+            'daily_reward': config.daily_reward,
+            'weekly_trend': weekly,
+        })
+
+    @action(detail=False, methods=['put'])
+    def update_reward(self, request):
+        """修改每日奖励数额"""
+        reward = request.data.get('daily_reward')
+        if reward is None or int(reward) < 0:
+            return Response({'message': '请输入有效的奖励数额'}, status=status.HTTP_400_BAD_REQUEST)
+        config = CheckInConfig.get_config()
+        config.daily_reward = int(reward)
+        config.save(update_fields=['daily_reward'])
+        return Response({'message': f'已更新为 {int(reward)} 虚拟币/天', 'daily_reward': int(reward)})
+
+
+class AdminMembershipOrderViewSet(viewsets.ModelViewSet):
+    """管理后台-充值订单管理"""
+    queryset = MembershipOrder.objects.select_related('user').all()
+    serializer_class = MembershipOrderSerializer
+    permission_classes = [IsAuthenticated, IsAdminUserOrStaff]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['order_no', 'user__username']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = MembershipOrder.objects.select_related('user').all()
+        status_filter = self.request.query_params.get('status')
+        plan_type = self.request.query_params.get('plan_type')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if plan_type:
+            queryset = queryset.filter(plan_type=plan_type)
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """充值统计"""
+        total_orders = MembershipOrder.objects.count()
+        paid_orders = MembershipOrder.objects.filter(status='paid').count()
+        total_revenue = MembershipOrder.objects.filter(status='paid').aggregate(
+            s=Sum('amount')
+        )['s'] or 0
+
+        by_plan = []
+        for key, label in [('monthly', '月卡'), ('quarterly', '季卡'), ('yearly', '年卡')]:
+            count = MembershipOrder.objects.filter(plan_type=key, status='paid').count()
+            by_plan.append({'key': key, 'label': label, 'count': count})
+
+        return Response({
+            'total_orders': total_orders,
+            'paid_orders': paid_orders,
+            'total_revenue': float(total_revenue),
+            'by_plan': by_plan,
         })

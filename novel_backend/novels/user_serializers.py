@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, AdminUser, Favorite, ReadingProgress, Bookmark, EmailVerificationCode, SigninRecord, RechargePlan, RechargeOrder
+from .models import User, AdminUser, Favorite, ReadingProgress, Bookmark, EmailVerificationCode, CheckIn, MembershipOrder
 
 
 class SendCodeSerializer(serializers.Serializer):
@@ -20,7 +20,7 @@ class VerifyCodeSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'avatar', 'phone', 'is_vip', 'vip_expire_date', 'is_staff', 'created_at']
+        fields = ['id', 'username', 'email', 'avatar', 'phone', 'is_vip', 'vip_expire_date', 'is_staff', 'coins', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
@@ -127,25 +127,24 @@ class AdminUserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
-class SigninRecordSerializer(serializers.ModelSerializer):
+class CheckInSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+
     class Meta:
-        model = SigninRecord
-        fields = ['id', 'signin_date', 'coins_earned', 'consecutive_days', 'created_at']
+        model = CheckIn
+        fields = ['id', 'user', 'username', 'check_date', 'reward_coins', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
-class RechargePlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RechargePlan
-        fields = ['id', 'name', 'plan_type', 'price', 'days', 'description', 'is_active']
-        read_only_fields = ['id']
-
-
-class RechargeOrderSerializer(serializers.ModelSerializer):
-    plan_name = serializers.CharField(source='plan.name', read_only=True)
+class MembershipOrderSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    plan_type_display = serializers.CharField(source='get_plan_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
-        model = RechargeOrder
-        fields = ['id', 'order_no', 'plan', 'plan_name', 'amount', 'status',
-                  'expire_at', 'created_at', 'paid_at']
-        read_only_fields = ['id', 'order_no', 'status', 'created_at', 'paid_at']
+        model = MembershipOrder
+        fields = [
+            'id', 'user', 'username', 'order_no', 'plan_type', 'plan_type_display',
+            'amount', 'status', 'status_display', 'paid_at', 'expire_at', 'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']

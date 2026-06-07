@@ -55,9 +55,6 @@ export const novelApi = {
 
   category_stats: () =>
     request.get('/novels/category_stats/'),
-
-  homeData: () =>
-    request.get('/novels/home_data/'),
 }
 
 export const chapterApi = {
@@ -399,28 +396,92 @@ export const adminApi = {
     fullStats: () =>
       request.get('/admin/books/full_stats/'),
   },
+
+  // ── 签到管理 ──
+  checkin: {
+    list: (params?: any) =>
+      request.get('/admin/checkins/', { params }),
+
+    stats: () =>
+      request.get('/admin/checkins/stats/'),
+
+    updateReward: (dailyReward: number) =>
+      request.put('/admin/checkins/update_reward/', { daily_reward: dailyReward }),
+  },
+
+  // ── 充值订单管理 ──
+  order: {
+    list: (params?: any) =>
+      request.get('/admin/orders/', { params }),
+
+    stats: () =>
+      request.get('/admin/orders/stats/'),
+  },
 }
 
-// 签到相关
-export const signinApi = {
-  doSignin: () =>
-    request.post('/signin/do_signin/'),
+// ── 用户签到 API ──
+export const checkinApi = {
+  doCheckin: () =>
+    request.post('/checkin/do_checkin/'),
 
-  getStatus: () =>
-    request.get('/signin/status/'),
+  status: () =>
+    request.get('/checkin/status/'),
+
+  records: (days?: number) =>
+    request.get('/checkin/records/', { params: { days: days || 30 } }),
 }
 
-// 充值相关
-export const rechargeApi = {
-  getPlans: () =>
-    request.get('/recharge/'),
+// ── 用户充值会员 API ──
+export interface MembershipPlan {
+  key: string
+  name: string
+  days: number
+  price: number
+}
 
-  createOrder: (planId: number) =>
-    request.post('/recharge/create_order/', { plan_id: planId }),
+export const membershipApi = {
+  plans: () =>
+    request.get<MembershipPlan[]>('/membership/plans/'),
+
+  myStatus: () =>
+    request.get('/membership/my_status/'),
+
+  createOrder: (planType: string) =>
+    request.post('/membership/create_order/', { plan_type: planType }),
 
   myOrders: () =>
-    request.get('/recharge/my_orders/'),
+    request.get('/membership/my_orders/'),
+}
 
-  vipStatus: () =>
-    request.get('/recharge/vip_status/'),
+// ── 关注作者 API ──
+export const followApi = {
+  follow: (authorName: string) =>
+    request.post('/follow/follow/', { author_name: authorName }),
+
+  unfollow: (authorName: string) =>
+    request.post('/follow/unfollow/', { author_name: authorName }),
+
+  check: (authorName: string) =>
+    request.get('/follow/check/', { params: { author_name: authorName } }),
+
+  myFollows: (params?: { page?: number; page_size?: number }) =>
+    request.get('/follow/my_follows/', { params }),
+
+  followers: (authorName: string, params?: { page?: number; page_size?: number }) =>
+    request.get('/follow/followers/', { params: { author_name: authorName, ...params } }),
+
+  authorDetail: (authorName: string) =>
+    request.get('/follow/author_detail/', { params: { author_name: authorName } }),
+}
+
+// ── 小说评分 API ──
+export const ratingApi = {
+  submit: (novelId: number, score: number) =>
+    request.post('/rating/submit/', { novel_id: novelId, score }),
+
+  stat: (novelId: number) =>
+    request.get('/rating/stat/', { params: { novel_id: novelId } }),
+
+  myRating: (novelId: number) =>
+    request.get('/rating/my_rating/', { params: { novel_id: novelId } }),
 }

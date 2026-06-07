@@ -29,7 +29,7 @@
               v-model="keyword"
               type="text"
               class="sp-search-box__input"
-              placeholder="输入书名、作者、关键词..."
+              placeholder="搜索书名、作者、分类"
               @keyup.enter="handleSearch"
             />
             <button class="sp-search-box__btn" @click="handleSearch">搜索</button>
@@ -117,10 +117,10 @@
           >
             <div class="sp-result__cover-wrap">
               <img
-                v-lazy="novel.cover"
+                v-lazy="novel.cover || defaultCover"
                 :alt="novel.title"
                 class="sp-result__cover"
-                @error="($event.target as HTMLImageElement).src = 'https://placehold.co/300x400/8B4513/FFFFFF?text=%E5%B0%81%E9%9D%A2'"
+                @error="onCoverError"
               />
             </div>
             <div class="sp-result__body">
@@ -187,6 +187,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { novelApi } from '../api'
+import { DEFAULT_COVER } from '../utils/image'
+
+const defaultCover = DEFAULT_COVER
+const onCoverError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  if (img.src !== defaultCover) img.src = defaultCover
+}
 
 const route = useRoute()
 const router = useRouter()

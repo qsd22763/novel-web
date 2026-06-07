@@ -20,12 +20,7 @@ class NovelListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Novel
-        fields = [
-            'id', 'title', 'author', 'cover', 'description', 'category',
-            'status', 'word_count', 'view_count', 'updated_at',
-            'latest_chapter',
-            'is_adapted', 'is_recommended', 'recommend_comment', 'topic_tag',
-        ]
+        fields = ['id', 'title', 'author', 'cover', 'description', 'category', 'status', 'word_count', 'view_count', 'updated_at', 'latest_chapter']
 
     def get_latest_chapter(self, obj):
         latest = obj.chapters.order_by('-chapter_order').first()

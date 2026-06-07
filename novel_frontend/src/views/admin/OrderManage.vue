@@ -74,7 +74,18 @@ async function loadStats() {
   try {
     const data: any = await adminApi.order.stats()
     if (data) {
-      stats.value = { ...stats.value, ...data }
+      // 后端返回 by_plan: [{key:'monthly',count:N}, ...] → 转为 flat 字段
+      const planMap = {}
+      if (Array.isArray(data.by_plan)) {
+        for (const p of data.by_plan) { planMap[p.key] = p.count }
+      }
+      stats.value = {
+        ...stats.value,
+        ...data,
+        monthly_count: planMap.monthly || 0,
+        quarterly_count: planMap.quarterly || 0,
+        yearly_count: planMap.yearly || 0,
+      }
     }
   } catch (e) {
     console.error('加载订单统计失败:', e)
@@ -93,8 +104,14 @@ async function loadData() {
     if (queryParams.search) params.search = queryParams.search
 
     const data: any = await adminApi.order.list(params)
-    tableData.value = data.results || []
-    total.value = data.count || 0
+    // 兼容 DRF 分页 {results:[], count:N} 和非分页直接数组两种格式
+    if (Array.isArray(data)) {
+      tableData.value = data
+      total.value = data.length
+    } else {
+      tableData.value = data.results || []
+      total.value = data.count || 0
+    }
   } catch (e) {
     console.error('加载订单列表失败:', e)
     ElMessage.error('加载订单列表失败')

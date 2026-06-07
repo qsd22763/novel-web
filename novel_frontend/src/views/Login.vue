@@ -190,7 +190,8 @@
           </button>
         </div>
 
-      </main>
+      </div>
+    </main>
   </div>
 </template>
 

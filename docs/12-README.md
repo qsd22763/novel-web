@@ -152,10 +152,10 @@ npm run dev
 │           ├── NovelDetail.vue     # 详情(金色主题+星级评分)
 │           ├── Rankings.vue        # 排行(Tab榜单)
 │           ├── Search.vue          # 搜索
-│           ├── AuthorHome.vue      # 作者主页
-│           ├── Follow.vue          # 我的关注
-│           ├── SignIn.vue          # 签到
-│           ├── Member.vue          # 会员
+│           ├── AuthorProfile.vue   # 作者主页
+│           ├── MyFollows.vue       # 我的关注
+│           ├── CheckIn.vue         # 签到
+│           ├── Membership.vue      # 会员
 │           ├── UserCenter.vue      # 个人中心
 │           └── admin/              # 管理后台(6页)
 │               ├── AdminLayout.vue

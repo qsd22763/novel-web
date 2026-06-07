@@ -156,12 +156,6 @@ const router = createRouter({
           component: () => import('../views/admin/OrderManage.vue'),
           meta: { title: '充值订单' },
         },
-        {
-          path: 'followers',
-          name: 'AdminFollowers',
-          component: () => import('../views/admin/AdminFollowers.vue'),
-          meta: { title: '粉丝管理' },
-        },
       ],
     },
     {

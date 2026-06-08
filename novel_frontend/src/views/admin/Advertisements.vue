@@ -146,7 +146,7 @@ function handleDateChange(val: string[] | null) {
 
 async function fetchStats() {
   try {
-    const res = await adminApi.advertisement.list({ page: 1, page_size: 1 })
+    const res = await adminApi.advertisementList({ page: 1, page_size: 1 })
     const list = res.results || []
     stats.value = {
       total: res.count || 0,
@@ -170,7 +170,7 @@ async function fetchData() {
     if (filters.is_active) params.is_active = filters.is_active === 'true'
     if (filters.search) params.search = filters.search
 
-    const res = await adminApi.advertisement.list(params)
+    const res = await adminApi.advertisementList(params)
     tableData.value = res.results
     pagination.count = res.count
   } catch (e: any) {
@@ -279,11 +279,11 @@ async function handleSubmit() {
     }
 
     if (dialogMode.value === 'create') {
-      await adminApi.advertisement.create(payload)
+      await adminApi.createAdvertisement(payload)
       ElMessage.success('广告创建成功')
     } else {
       const id = (formData as any)._id
-      await adminApi.advertisement.update(id, payload)
+      await adminApi.updateAdvertisement(id, payload)
       ElMessage.success('广告更新成功')
     }
     dialogVisible.value = false
@@ -306,7 +306,7 @@ async function handleDelete(row: Advertisement) {
       type: 'warning',
       confirmButtonClass: 'el-button--danger'
     })
-    await adminApi.advertisement.delete(row.id)
+    await adminApi.deleteAdvertisement(row.id)
     ElMessage.success('广告已删除')
     fetchData()
     fetchStats()
@@ -336,7 +336,7 @@ async function handleBatchActivate() {
       cancelButtonText: '取消',
       type: 'info'
     })
-    await adminApi.advertisement.list({}) // batch via individual toggles
+    await adminApi.advertisementList({}) // batch via individual toggles
     ElMessage.success(`已启用 ${ids.length} 条广告`)
     selectedRows.value = []
     fetchData()
@@ -355,7 +355,7 @@ async function handleBatchDeactivate() {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await adminApi.advertisement.list({}) // batch via individual toggles
+    await adminApi.advertisementList({}) // batch via individual toggles
     ElMessage.success(`已禁用 ${ids.length} 条广告`)
     selectedRows.value = []
     fetchData()
@@ -375,7 +375,7 @@ async function handleBatchDelete() {
       type: 'error',
       confirmButtonClass: 'el-button--danger'
     })
-    await adminApi.advertisement.list({}) // batch via individual deletes
+    await adminApi.advertisementList({}) // batch via individual deletes
     ElMessage.success(`已删除 ${ids.length} 条广告`)
     selectedRows.value = []
     fetchData()

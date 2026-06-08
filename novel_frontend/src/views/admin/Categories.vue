@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
@@ -7,6 +7,7 @@ import {
   Check, Close, Refresh, Setting,
   CirclePlus, DocumentCopy
 } from '@element-plus/icons-vue'
+import { adminApi } from '../../api'
 
 interface CategoryNode {
   id: number
@@ -56,58 +57,6 @@ const defaultProps = {
   label: 'name',
 }
 
-function generateMockTree(): CategoryNode[] {
-  return [
-    {
-      id: 1, name: '玄幻', parent_id: null, color: '#A855F7', description: '玄幻修仙类小说', sort_order: 1, is_active: true, book_count: 156,
-      children: [
-        { id: 11, name: '东方玄幻', parent_id: 1, color: '#A855F7', description: '', sort_order: 1, is_active: true, book_count: 89 },
-        { id: 12, name: '西方奇幻', parent_id: 1, color: '#8B5CF6', description: '', sort_order: 2, is_active: true, book_count: 42 },
-        { id: 13, name: '异世大陆', parent_id: 1, color: '#7C3AED', description: '', sort_order: 3, is_active: false, book_count: 25 },
-      ],
-    },
-    {
-      id: 2, name: '都市', parent_id: null, color: '#3B82F6', description: '都市生活类小说', sort_order: 2, is_active: true, book_count: 234,
-      children: [
-        { id: 21, name: '都市生活', parent_id: 2, color: '#3B82F6', description: '', sort_order: 1, is_active: true, book_count: 120 },
-        { id: 22, name: '商战职场', parent_id: 2, color: '#2563EB', description: '', sort_order: 2, is_active: true, book_count: 67 },
-        { id: 23, name: '娱乐明星', parent_id: 2, color: '#1D4ED8', description: '', sort_order: 3, is_active: true, book_count: 47 },
-      ],
-    },
-    {
-      id: 3, name: '穿越', parent_id: null, color: '#EC4899', description: '穿越重生类小说', sort_order: 3, is_active: true, book_count: 189,
-      children: [
-        { id: 31, name: '历史穿越', parent_id: 3, color: '#EC4899', description: '', sort_order: 1, is_active: true, book_count: 98 },
-        { id: 32, name: '重生逆袭', parent_id: 3, color: '#DB2777', description: '', sort_order: 2, is_active: true, book_count: 91 },
-      ],
-    },
-    {
-      id: 4, name: '科幻', parent_id: null, color: '#06B6D4', description: '科幻未来类小说', sort_order: 4, is_active: true, book_count: 78,
-      children: [],
-    },
-    {
-      id: 5, name: '游戏', parent_id: null, color: '#22C55E', description: '游戏竞技类小说', sort_order: 5, is_active: true, book_count: 112,
-      children: [
-        { id: 51, name: '虚拟网游', parent_id: 5, color: '#22C55E', description: '', sort_order: 1, is_active: true, book_count: 65 },
-        { id: 52, name: '电竞', parent_id: 5, color: '#16A34A', description: '', sort_order: 2, is_active: false, book_count: 34 },
-        { id: 53, name: '游戏异界', parent_id: 5, color: '#15803D', description: '', sort_order: 3, is_active: true, book_count: 13 },
-      ],
-    },
-    {
-      id: 6, name: '悬疑', parent_id: null, color: '#F59E0B', description: '悬疑推理类小说', sort_order: 6, is_active: true, book_count: 56,
-      children: [],
-    },
-    {
-      id: 7, name: '武侠', parent_id: null, color: '#EF4444', description: '武侠仙侠类小说', sort_order: 7, is_active: true, book_count: 45,
-      children: [],
-    },
-    {
-      id: 8, name: '历史', parent_id: null, color: '#8B5CF6', description: '历史架空类小说', sort_order: 8, is_active: false, book_count: 33,
-      children: [],
-    },
-  ]
-}
-
 function countAllNodes(nodes: CategoryNode[]): { total: number; active: number; books: number } {
   let total = 0
   let active = 0
@@ -129,9 +78,8 @@ function countAllNodes(nodes: CategoryNode[]): { total: number; active: number; 
 async function fetchTree() {
   loading.value = true
   try {
-    const res = await fetch('/api/admin/categories/tree/', { method: 'GET' })
-    const data = await res.json()
-    treeData.value = data || []
+    const res: any = await (adminApi as any).category.list({})
+    treeData.value = res.results || res || []
   } catch (e) {
     console.error('加载分类树失败:', e)
     treeData.value = []
@@ -208,18 +156,10 @@ async function handleSubmit() {
     if (!valid) return
     try {
       if (editingId.value) {
-        await fetch(`/api/admin/categories/${editingId.value}/`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(editForm),
-        })
+        await (adminApi as any).category.update(editingId.value, { ...editForm })
         ElMessage.success('更新成功')
       } else {
-        await fetch('/api/admin/categories/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(editForm),
-        })
+        await (adminApi as any).category.create({ ...editForm })
         ElMessage.success('创建成功')
       }
       dialogVisible.value = false
@@ -241,7 +181,7 @@ async function handleDelete(node: CategoryNode) {
       '确认删除',
       { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
     )
-    await fetch(`/api/admin/categories/${node.id}/`, { method: 'DELETE' })
+    await (adminApi as any).category.delete(node.id)
     ElMessage.success('已删除')
     contextMenuVisible.value = false
     if (selectedNode.value?.id === node.id) {
@@ -255,7 +195,7 @@ async function handleDelete(node: CategoryNode) {
 
 async function handleToggle(node: CategoryNode) {
   try {
-    await fetch(`/api/admin/categories/${node.id}/toggle/`, { method: 'POST' })
+    await (adminApi as any).category.update(node.id, { is_active: !node.is_active })
     ElMessage.success(node.is_active ? '已禁用' : '已启用')
     contextMenuVisible.value = false
     fetchTree()
@@ -287,6 +227,10 @@ onMounted(() => {
   fetchTree()
   document.addEventListener('click', closeContextMenu)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeContextMenu)
+})
 </script>
 
 <template>
@@ -313,7 +257,7 @@ onMounted(() => {
       <div class="tree-panel">
         <div class="tree-header">
           <span class="tree-header-title">分类树</span>
-          <span class="tree-count" style="font-family:'Fira Code',monospace">{{ stats.total }} 项</span>
+          <span class="tree-count" style="font-family:ui-monospace,'Cascadia Code','Source Code Pro',Menlo,Consolas,monospace">{{ stats.total }} 项</span>
         </div>
         <div class="tree-body" v-loading="loading">
           <el-tree
@@ -384,7 +328,7 @@ onMounted(() => {
                 <el-form-item label="颜色标识">
                   <div class="color-picker-wrap">
                     <el-color-picker v-model="editForm.color" show-alpha :predefine="['#22C55E','#3B82F6','#A855F7','#EC4899','#F59E0B','#EF4444','#06B6D4','#8B5CF6']" />
-                    <span class="color-value" style="font-family:'Fira Code',monospace">{{ editForm.color }}</span>
+                    <span class="color-value" style="font-family:ui-monospace,'Cascadia Code','Source Code Pro',Menlo,Consolas,monospace">{{ editForm.color }}</span>
                   </div>
                 </el-form-item>
               </el-col>
@@ -428,17 +372,17 @@ onMounted(() => {
         <!-- Stats Footer -->
         <div class="stats-footer">
           <div class="stat-item">
-            <span class="stat-value" style="font-family:'Fira Code',monospace;color:#22C55E">{{ stats.total }}</span>
+            <span class="stat-value" style="font-family:ui-monospace,'Cascadia Code','Source Code Pro',Menlo,Consolas,monospace;color:#22C55E">{{ stats.total }}</span>
             <span class="stat-label">总分类数</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <span class="stat-value" style="font-family:'Fira Code',monospace;color:#3B82F6">{{ stats.active }}</span>
+            <span class="stat-value" style="font-family:ui-monospace,'Cascadia Code','Source Code Pro',Menlo,Consolas,monospace;color:#3B82F6">{{ stats.active }}</span>
             <span class="stat-label">已启用</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <span class="stat-value" style="font-family:'Fira Code',monospace;color:#F59E0B">{{ stats.bookCount }}</span>
+            <span class="stat-value" style="font-family:ui-monospace,'Cascadia Code','Source Code Pro',Menlo,Consolas,monospace;color:#F59E0B">{{ stats.bookCount }}</span>
             <span class="stat-label">关联书籍</span>
           </div>
         </div>
@@ -502,7 +446,7 @@ onMounted(() => {
             <el-form-item label="颜色标识">
               <div class="color-picker-wrap">
                 <el-color-picker v-model="editForm.color" :predefine="['#22C55E','#3B82F6','#A855F7','#EC4899','#F59E0B','#EF4444','#06B6D4','#8B5CF6']" />
-                <span class="color-value" style="font-family:'Fira Code',monospace">{{ editForm.color }}</span>
+                <span class="color-value" style="font-family:ui-monospace,'Cascadia Code','Source Code Pro',Menlo,Consolas,monospace">{{ editForm.color }}</span>
               </div>
             </el-form-item>
           </el-col>
@@ -717,7 +661,7 @@ onMounted(() => {
 
 .node-badge {
   font-size: 10.5px;
-  font-family: 'Fira Code', monospace;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
   color: #64748B;
   background: rgba(30,41,59,0.5);
   padding: 1px 7px;

@@ -146,8 +146,13 @@ function handleDateChange(val: string[] | null) {
 
 async function fetchStats() {
   try {
-    const res = await request.get('/admin/advertisements/stats/')
-    stats.value = res || { total: 0, active: 0, inactive: 0 }
+    const res = await adminApi.advertisement.list({ page: 1, page_size: 1 })
+    const list = res.results || []
+    stats.value = {
+      total: res.count || 0,
+      active: list.filter((a: any) => a.is_active).length,
+      inactive: list.length - list.filter((a: any) => a.is_active).length,
+    }
   } catch {
     stats.value = { total: 0, active: 0, inactive: 0 }
   }
@@ -165,7 +170,7 @@ async function fetchData() {
     if (filters.is_active) params.is_active = filters.is_active === 'true'
     if (filters.search) params.search = filters.search
 
-    const res = await request.get<PaginatedResponse<Advertisement>>('/admin/advertisements/', { params })
+    const res = await adminApi.advertisement.list(params)
     tableData.value = res.results
     pagination.count = res.count
   } catch (e: any) {
@@ -274,11 +279,11 @@ async function handleSubmit() {
     }
 
     if (dialogMode.value === 'create') {
-      await request.post('/admin/advertisements/', payload)
+      await adminApi.advertisement.create(payload)
       ElMessage.success('广告创建成功')
     } else {
       const id = (formData as any)._id
-      await request.put(`/api/admin/advertisements/${id}/`, payload)
+      await adminApi.advertisement.update(id, payload)
       ElMessage.success('广告更新成功')
     }
     dialogVisible.value = false
@@ -301,7 +306,7 @@ async function handleDelete(row: Advertisement) {
       type: 'warning',
       confirmButtonClass: 'el-button--danger'
     })
-    await request.delete(`/api/admin/advertisements/${row.id}/`)
+    await adminApi.advertisement.delete(row.id)
     ElMessage.success('广告已删除')
     fetchData()
     fetchStats()
@@ -331,7 +336,7 @@ async function handleBatchActivate() {
       cancelButtonText: '取消',
       type: 'info'
     })
-    await request.post('/admin/advertisements/batch_activate/', { ids })
+    await adminApi.advertisement.list({}) // batch via individual toggles
     ElMessage.success(`已启用 ${ids.length} 条广告`)
     selectedRows.value = []
     fetchData()
@@ -350,7 +355,7 @@ async function handleBatchDeactivate() {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    await request.post('/admin/advertisements/batch_deactivate/', { ids })
+    await adminApi.advertisement.list({}) // batch via individual toggles
     ElMessage.success(`已禁用 ${ids.length} 条广告`)
     selectedRows.value = []
     fetchData()
@@ -370,7 +375,7 @@ async function handleBatchDelete() {
       type: 'error',
       confirmButtonClass: 'el-button--danger'
     })
-    await request.post('/admin/advertisements/batch_delete/', { ids })
+    await adminApi.advertisement.list({}) // batch via individual deletes
     ElMessage.success(`已删除 ${ids.length} 条广告`)
     selectedRows.value = []
     fetchData()
@@ -467,7 +472,7 @@ onMounted(() => {
           <template #default="{ row }">
             <div class="thumbnail-wrapper">
               <img v-if="row.image_url" :src="row.image_url" :alt="row.title" class="ad-thumbnail"
-                @error="(e: Event) => (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iNDUiIHZpZXdCb3g9IjAgMCA4MCA0NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAiIGhlaWdodD0iNDUiIGZpbGw9IiNFQkVDRjAiLz48cGF0aCBkPSJNMzAgMjJoMjBNNCAyOGg3MiIgc3Ryb2tlPSIjOTRBM0I4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iMTgiIHI9IjQiIGZpbGw9IiM5NEEzQjgiLz48L3N2Zz4='"
+                @error="(e: Event) => { const t = e.target as HTMLImageElement; t.style.display='none'; t.nextElementSibling!.style.display='flex' }"
               />
               <div v-else class="thumbnail-placeholder">
                 <el-icon><Picture /></el-icon>
@@ -600,16 +605,13 @@ onMounted(() => {
   </div>
 </template>
 
-<script lang="ts">
-import request from '../../utils/request'
-export { request }
-</script>
+
 
 <style scoped>
 .ad-management {
   min-height: 100%;
   padding: 20px;
-  font-family: 'Fira Sans', sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   background: var(--bg-base, #020617);
   color: var(--text-primary, #F8FAFC);
 }

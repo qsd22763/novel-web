@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminApi, type AdminAnnouncement } from '../../api'
 
@@ -54,13 +54,15 @@ const typeConfig: Record<string, { color: string; bg: string; dot: string }> = {
   activity: { color: '#22C55E', bg: 'rgba(34,197,94,0.12)', dot: '#4ADE80' },
 }
 
-const sortedData = computed(() => {
-  return [...tableData.value].sort((a, b) => {
+const sortedData = ref<Announcement[]>([])
+
+function updateSortedData() {
+  sortedData.value = [...tableData.value].sort((a, b) => {
     if (a.is_pinned && !b.is_pinned) return -1
     if (!a.is_pinned && b.is_pinned) return 1
     return 0
   })
-})
+}
 
 const fetchData = async () => {
   loading.value = true
@@ -76,6 +78,7 @@ const fetchData = async () => {
     const res = await adminApi.announcement.list(params)
     tableData.value = res.results || []
     total.value = res.count || 0
+    updateSortedData()
   } catch {
     ElMessage.error('获取公告列表失败')
   } finally {
@@ -636,8 +639,11 @@ onMounted(() => {
 .pin-icon {
   font-size: 16px;
   display: inline-block;
-  animation: pin-bounce 2s ease-in-out infinite;
   filter: drop-shadow(0 0 4px rgba(245,158,11,0.5));
+}
+
+.pin-icon:hover {
+  animation: pin-bounce 0.4s ease-in-out;
 }
 
 @keyframes pin-bounce {
@@ -691,7 +697,7 @@ onMounted(() => {
 .time-text {
   color: #64748B;
   font-size: 12.5px;
-  font-family: 'Fira Code', monospace;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
 }
 
 .action-btns {

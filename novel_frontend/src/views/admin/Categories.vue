@@ -537,10 +537,8 @@ onMounted(() => {
 </template>
 
 <style scoped>
-@import url('https://fonts.loli.net/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700&display=swap');
-
 .categories-management {
-  font-family: 'Fira Sans', system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   padding-bottom: 32px;
 }
 

@@ -928,10 +928,8 @@ const hasActiveFilters = computed(() => {
 </template>
 
 <style scoped>
-@import url('https://fonts.loli.net/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
-
 .books-management {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   padding-bottom: 32px;
 }
 
@@ -1487,7 +1485,6 @@ const hasActiveFilters = computed(() => {
   gap: 16px;
   padding: 12px 24px;
   background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(15,23,42,0.98));
-  backdrop-filter: blur(20px);
   border: 1px solid rgba(34,197,94,0.2);
   border-radius: 14px;
   box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 60px rgba(34,197,94,0.06);

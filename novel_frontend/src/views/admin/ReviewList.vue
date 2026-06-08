@@ -127,8 +127,8 @@
         </el-table-column>
         <el-table-column label="状态" width="110" align="center">
           <template #default="{ row }">
-            <el-tag :type="safeAuditType(row.audit_status)" size="small" effect="dark">
-              {{ safeAuditLabel(row.audit_status) }}
+            <el-tag :type="AUDIT_STATUS_MAP[row.audit_status]?.type || 'info'" size="small" effect="dark">
+              {{ AUDIT_STATUS_MAP[row.audit_status]?.label || '未知' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -222,8 +222,8 @@
             <p>作者：{{ previewData.author }}</p>
             <p>分类：{{ previewData.category }}</p>
             <p>字数：{{ formatCount(previewData.word_count) }} | 状态：{{ STATUS_MAP[previewData.status]?.label }}</p>
-            <el-tag :type="safeAuditType(previewData.audit_status)" size="small">
-              {{ safeAuditLabel(previewData.audit_status) }}
+            <el-tag :type="AUDIT_STATUS_MAP[previewData.audit_status]?.type" size="small">
+              {{ AUDIT_STATUS_MAP[previewData.audit_status]?.label }}
             </el-tag>
           </div>
         </div>
@@ -267,23 +267,11 @@ const STATUS_MAP: Record<number, { label: string }> = {
   2: { label: '已下架' },
 }
 
-const AUDIT_STATUS_MAP: Record<number | string, { type: string; label: string }> = {
+const AUDIT_STATUS_MAP: Record<number, { type: string; label: string }> = {
   0: { type: 'info', label: '草稿' },
   1: { type: 'warning', label: '待审核' },
   2: { type: 'success', label: '已通过' },
   3: { type: 'danger', label: '已驳回' },
-}
-
-/** 安全获取审核状态类型，始终返回 Element Plus 合法 type 字符串 */
-function safeAuditType(status: any): string {
-  const entry = AUDIT_STATUS_MAP[status]
-  return entry?.type || 'info'
-}
-
-/** 安全获取审核状态标签 */
-function safeAuditLabel(status: any): string {
-  const entry = AUDIT_STATUS_MAP[status]
-  return entry?.label || '未知'
 }
 
 // ── 数据 ──
@@ -323,7 +311,8 @@ const previewData = ref<ReviewBook | null>(null)
 
 const loadStats = async () => {
   try {
-    // 从各状态分别查询总数（只取 count，不取数据）
+    const res: any = await adminApi.reviewList({ page_size: 1 })
+    // 从分页接口无法直接获取统计，用各状态分别查询
     const [pendingRes, approvedRes, rejectedRes]: any[] = await Promise.all([
       adminApi.reviewList({ audit_status: '1', page_size: 1 }),
       adminApi.reviewList({ audit_status: '2', page_size: 1 }),
@@ -332,7 +321,7 @@ const loadStats = async () => {
     stats.pending = pendingRes.count || 0
     stats.approved = approvedRes.count || 0
     stats.rejected = rejectedRes.count || 0
-    stats.total = stats.pending + stats.approved + stats.rejected
+    stats.total = res.count || 0
   } catch {
     // 统计加载失败不影响主列表
   }

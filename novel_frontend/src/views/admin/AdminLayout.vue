@@ -162,7 +162,6 @@ const handleCommand = (command: string) => {
 </template>
 
 <style scoped>
-@import url('https://fonts.loli.net/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700&display=swap');
 
 .admin-layout {
   display: flex;
@@ -170,7 +169,7 @@ const handleCommand = (command: string) => {
   width: 100vw;
   background: #020617;
   color: #F8FAFC;
-  font-family: 'Fira Sans', system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   overflow: hidden;
 }
 
@@ -381,7 +380,6 @@ const handleCommand = (command: string) => {
   position: relative;
   z-index: 5;
   flex-shrink: 0;
-  backdrop-filter: blur(12px);
 }
 
 .top-header::after {
@@ -538,7 +536,7 @@ const handleCommand = (command: string) => {
 
 .page-fade-enter-active,
 .page-fade-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.1s ease, transform 0.1s ease;
 }
 
 .page-fade-enter-from {

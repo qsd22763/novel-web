@@ -357,10 +357,8 @@ onMounted(() => {
 </template>
 
 <style scoped>
-@import url('https://fonts.loli.net/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
-
 .order-manage {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   padding-bottom: 32px;
 }
 

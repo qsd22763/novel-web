@@ -515,7 +515,8 @@ class BookCategoryViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def tree(self, request):
-        roots = BookCategory.objects.filter(parent=None, is_active=True).order_by('sort_order', 'id')
+        # 扁平返回所有顶级分类，不包含子分类
+        roots = BookCategory.objects.filter(parent=None).order_by('sort_order', 'id')
         serializer = self.get_serializer(roots, many=True)
         return Response(serializer.data)
 

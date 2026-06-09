@@ -104,17 +104,23 @@ async function loadData() {
     if (queryParams.search) params.search = queryParams.search
 
     const data: any = await adminApi.order.list(params)
+    console.log('[OrderList] 原始响应:', JSON.stringify(data))
     // 兼容 DRF 分页 {results:[], count:N} 和非分页直接数组两种格式
     if (Array.isArray(data)) {
       tableData.value = data
       total.value = data.length
+    } else if (data && data.results) {
+      tableData.value = data.results
+      total.value = data.count || data.results.length
     } else {
-      tableData.value = data.results || []
-      total.value = data.count || 0
+      // 兜底：如果返回的是单个对象或异常格式
+      console.warn('[OrderList] 异常格式:', typeof data, data)
+      tableData.value = Array.isArray(data) ? data : (data ? [data] : [])
+      total.value = tableData.value.length
     }
   } catch (e) {
     console.error('加载订单列表失败:', e)
-    ElMessage.error('加载订单列表失败')
+    ElMessage.error('加载订单列表失败: ' + (e as Error)?.message)
     tableData.value = []
     total.value = 0
   } finally {

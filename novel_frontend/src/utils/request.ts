@@ -10,7 +10,7 @@ interface RequestInstance {
 }
 
 const instance = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_BASE || '/api',
   timeout: 30000,
   withCredentials: true,
 })

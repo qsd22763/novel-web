@@ -611,9 +611,13 @@ onMounted(() => {
 
 .order-table :deep(td.el-table__cell) {
   border-bottom: 1px solid rgba(30,41,59,0.4);
-  padding: 12px 0;
+  padding: 6px 0;
   vertical-align: middle;
   background: #020617 !important;
+}
+
+.order-table :deep(.el-table__body .el-table__row) {
+  height: 48px;
 }
 
 .order-table :deep(.el-table__body tr) {

@@ -252,16 +252,7 @@ const isLoggedIn = computed(() => !!localStorage.getItem('user'))
 const userAvatar = ref('')
 
 interface Category { name: string; icon: string; count: number }
-const categories = ref<Category[]>([
-  { name: '玄幻', icon: '', count: 0 },
-  { name: '都市', icon: '', count: 0 },
-  { name: '穿越', icon: '', count: 0 },
-  { name: '科幻', icon: '', count: 0 },
-  { name: '游戏', icon: '', count: 0 },
-  { name: '悬疑', icon: '', count: 0 },
-  { name: '武侠', icon: '', count: 0 },
-  { name: '历史', icon: '', count: 0 },
-])
+const categories = ref<Category[]>([])
 
 const totalPages = computed(() => Math.ceil(totalNovels.value / pageSize.value))
 
@@ -306,7 +297,12 @@ const loadNovels = async () => {
 const loadCategoryStats = async () => {
   try {
     const res: any = await novelApi.category_stats()
-    categories.value = categories.value.map(cat => ({ ...cat, count: res[cat.name] || 0 }))
+    // 动态构建分类列表（后端返回 {分类名: 数量}）
+    categories.value = Object.keys(res || {}).map(name => ({
+      name,
+      icon: '',
+      count: res[name] || 0,
+    })).sort((a, b) => b.count - a.count)
   } catch (e) { console.error('加载分类统计失败:', e) }
 }
 

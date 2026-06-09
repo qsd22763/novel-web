@@ -90,10 +90,12 @@ class NovelViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def category_stats(self, request):
-        # 动态查询所有小说中实际使用的分类，不再硬编码
-        categories = Novel.objects.values_list('category', flat=True).distinct().exclude(category='')
+        # 从管理表获取所有分类（确保新创建的分类也显示）
+        from .models import BookCategory
+        managed_cats = {c.name for c in BookCategory.objects.filter(is_active=True)}
+        # 统计每个分类的小说数量
         stats = {}
-        for cat in categories:
+        for cat in managed_cats:
             stats[cat] = Novel.objects.filter(category=cat).count()
         return Response(stats)
 

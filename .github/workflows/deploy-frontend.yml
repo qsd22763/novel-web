@@ -37,6 +37,9 @@ jobs:
         env:
           GITHUB_PAGES: true
 
+      - name: Add .nojekyll (prevent Jekyll from ignoring _files)
+        run: touch novel_frontend/dist/.nojekyll
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

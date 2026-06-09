@@ -33,7 +33,7 @@ jobs:
         run: cd novel_frontend && npm ci
 
       - name: Build for GitHub Pages
-        run: cd novel_frontend && npm run build
+        run: cd novel_frontend && npx vite build
         env:
           GITHUB_PAGES: true
 

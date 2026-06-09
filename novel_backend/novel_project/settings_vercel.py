@@ -109,3 +109,29 @@ REST_FRAMEWORK = {
 
 # No static files collection on serverless
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# === Logging (required by Django setup) ===
+LOGGING_CONFIG = 'logging.config.dictConfig'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {'format': '%(levelname)s %(asctime)s %(module)s %(message)s'},
+        'simple': {'format': '%(levelname)s %(message)s'},
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'django.request': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'novels': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False},
+    },
+}

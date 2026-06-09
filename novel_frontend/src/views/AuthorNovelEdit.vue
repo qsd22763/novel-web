@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { authorApi } from '../api'
+import { authorApi, novelApi } from '../api'
 import { resolveCover } from '../utils/image'
 
 const route = useRoute()
@@ -84,7 +84,7 @@ const isEdit = computed(() => !!route.params.id)
 const saving = ref(false)
 const uploading = ref(false)
 
-const categories = ['玄幻', '都市', '穿越', '科幻', '游戏', '悬疑', '武侠', '历史']
+const categories = ref<string[]>([])
 
 const form = reactive({
   title: '',
@@ -156,6 +156,11 @@ const onSave = async () => {
 }
 
 onMounted(async () => {
+  // 动态加载分类列表
+  try {
+    const res: any = await novelApi.category_stats()
+    categories.value = Object.keys(res || {}).sort()
+  } catch (e) { /* 静默失败 */ }
   if (isEdit.value) {
     const res = await authorApi.novelDetail(Number(route.params.id))
     Object.assign(form, res.data)

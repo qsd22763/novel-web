@@ -331,7 +331,7 @@ watch(activeTab, () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.loli.net/css2?family=Cormorant+Garamond:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+/* 使用系统字体栈替代外部字体加载 */
 
 .rk-root {
   --paper-bg: #FDFBF7;
@@ -344,7 +344,7 @@ watch(activeTab, () => {
 
   min-height: 100vh;
   background: var(--paper-bg);
-  font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: var(--ink);
 }
 
@@ -367,7 +367,7 @@ watch(activeTab, () => {
 }
 
 .rk-logo {
-  font-family: 'Noto Serif SC', 'STSong', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 1.375rem;
   font-weight: 700;
   color: var(--ink);
@@ -446,7 +446,7 @@ watch(activeTab, () => {
   outline: none;
   background: transparent;
   font-size: 0.85rem;
-  font-family: 'Noto Sans SC', sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: var(--ink);
 }
 
@@ -522,7 +522,7 @@ watch(activeTab, () => {
 }
 
 .rk-banner__eyebrow {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: Georgia, 'Times New Roman', 'Songti SC', serif;
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   color: var(--accent);
@@ -531,7 +531,7 @@ watch(activeTab, () => {
 }
 
 .rk-banner__title {
-  font-family: 'Noto Serif SC', 'STSong', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--paper-bg);
@@ -540,7 +540,7 @@ watch(activeTab, () => {
 }
 
 .rk-banner__desc {
-  font-family: 'Libre Baskerville', 'Noto Sans SC', sans-serif;
+  font-family: Georgia, 'Times New Roman', 'Songti SC', system-ui, -apple-system, sans-serif;
   font-size: 0.9rem;
   color: rgba(253, 251, 247, 0.5);
   margin: 0;
@@ -579,7 +579,7 @@ watch(activeTab, () => {
   margin-bottom: -1.5px;
   cursor: pointer;
   font-size: 0.95rem;
-  font-family: 'Noto Sans SC', sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: var(--muted);
   transition: color 0.2s, border-color 0.2s;
   position: relative;
@@ -621,7 +621,7 @@ watch(activeTab, () => {
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 0.85rem;
   color: #9CA3AF;
   letter-spacing: 0.1em;
@@ -697,7 +697,7 @@ watch(activeTab, () => {
 }
 
 .rk-medal__num {
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 0.85rem;
   font-weight: 700;
   color: #fff;
@@ -731,7 +731,7 @@ watch(activeTab, () => {
 }
 
 .rk-podium-card__title {
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--ink);
@@ -808,7 +808,7 @@ watch(activeTab, () => {
   justify-content: center;
   width: 30px;
   height: 30px;
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 0.9rem;
   font-weight: 700;
   color: #9CA3AF;
@@ -853,7 +853,7 @@ watch(activeTab, () => {
 }
 
 .rk-row__title {
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--ink);
@@ -896,7 +896,7 @@ watch(activeTab, () => {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--ink);
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
 }
 
 .rk-row-stat__lbl {
@@ -914,7 +914,7 @@ watch(activeTab, () => {
   border: 1px solid var(--ink);
   border-radius: 2px;
   font-size: 0.82rem;
-  font-family: 'Noto Sans SC', sans-serif;
+  font-family: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: var(--ink);
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
@@ -1026,7 +1026,7 @@ watch(activeTab, () => {
 }
 
 .rk-footer__logo {
-  font-family: 'Noto Serif SC', serif;
+  font-family: 'Songti SC', 'SimSun', 'Noto Serif CJK SC', Georgia, serif;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--paper-bg);

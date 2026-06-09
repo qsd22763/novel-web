@@ -78,8 +78,8 @@ function countAllNodes(nodes: CategoryNode[]): { total: number; active: number; 
 async function fetchTree() {
   loading.value = true
   try {
-    const res: any = await (adminApi as any).category.list({})
-    treeData.value = res.results || res || []
+    const res: any = await adminApi.category.tree()
+    treeData.value = Array.isArray(res) ? res : []
   } catch (e) {
     console.error('加载分类树失败:', e)
     treeData.value = []
@@ -156,10 +156,10 @@ async function handleSubmit() {
     if (!valid) return
     try {
       if (editingId.value) {
-        await (adminApi as any).category.update(editingId.value, { ...editForm })
+        await adminApi.category.update(editingId.value, { ...editForm })
         ElMessage.success('更新成功')
       } else {
-        await (adminApi as any).category.create({ ...editForm })
+        await adminApi.category.create({ ...editForm })
         ElMessage.success('创建成功')
       }
       dialogVisible.value = false
@@ -181,7 +181,7 @@ async function handleDelete(node: CategoryNode) {
       '确认删除',
       { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'warning' }
     )
-    await (adminApi as any).category.delete(node.id)
+    await adminApi.category.delete(node.id)
     ElMessage.success('已删除')
     contextMenuVisible.value = false
     if (selectedNode.value?.id === node.id) {
@@ -195,7 +195,7 @@ async function handleDelete(node: CategoryNode) {
 
 async function handleToggle(node: CategoryNode) {
   try {
-    await (adminApi as any).category.update(node.id, { is_active: !node.is_active })
+    await adminApi.category.toggle(node.id)
     ElMessage.success(node.is_active ? '已禁用' : '已启用')
     contextMenuVisible.value = false
     fetchTree()

@@ -1,0 +1,21 @@
+[Unit]
+Description=Novel Web Django Gunicorn Service
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/www/novel_backend
+ExecStart=/www/novel_backend/venv/bin/gunicorn novel_project.wsgi:application -c /www/novel/deploy/gunicorn_config.py
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/novel/service.log
+StandardError=append:/var/log/novel/service_error.log
+
+Environment="DJANGO_SETTINGS_MODULE=novel_project.settings"
+
+[Install]
+WantedBy=multi-user.target

@@ -594,16 +594,24 @@ const currentRoute = computed(() => route.path)
 const isLoggedIn = computed(() => !!localStorage.getItem('user'))
 const userAvatar = ref('')
 
-const categories = ref<{ name: string; color: string; count: number }[]>([
-  { name: '玄幻', color: '#8b5cf6', count: 0 },
-  { name: '都市', color: '#ec4899', count: 0 },
-  { name: '穿越', color: '#f59e0b', count: 0 },
-  { name: '科幻', color: '#3b82f6', count: 0 },
-  { name: '游戏', color: '#10b981', count: 0 },
-  { name: '悬疑', color: '#6366f1', count: 0 },
-  { name: '武侠', color: '#ef4444', count: 0 },
-  { name: '历史', color: '#84cc16', count: 0 },
-])
+// 预设分类颜色映射（常用分类固定颜色，新分类自动分配）
+const CATEGORY_COLORS: Record<string, string> = {
+  '玄幻': '#8b5cf6', '都市': '#ec4899', '穿越': '#f59e0b', '科幻': '#3b82f6',
+  '游戏': '#10b981', '悬疑': '#6366f1', '武侠': '#ef4444', '历史': '#84cc16',
+  '文化': '#06b6d4',
+}
+const AUTO_COLORS = ['#f97316', '#14b8a6', '#a855f7', '#ec4899', '#64748b', '#0891b2']
+let colorIndex = 0
+function getCategoryColor(name: string): string {
+  if (CATEGORY_COLORS[name]) return CATEGORY_COLORS[name]
+  if (!CATEGORY_COLORS[name]) {
+    CATEGORY_COLORS[name] = AUTO_COLORS[colorIndex % AUTO_COLORS.length]
+    colorIndex++
+  }
+  return CATEGORY_COLORS[name]
+}
+
+const categories = ref<{ name: string; color: string; count: number }[]>([])
 
 // ===== 新书上架（横向滚动） =====
 const newBooks = ref<Novel[]>([])
@@ -773,11 +781,13 @@ const initBookLists = () => {
 
 const loadCategoryStats = async () => {
   try {
-    const res = await (novelApi as any).category_stats()
-    categories.value = categories.value.map(cat => ({
-      ...cat,
-      count: res[cat.name] || 0
-    }))
+    const res: any = await (novelApi as any).category_stats()
+    // 动态构建分类列表（后端返回 {分类名: 数量}）
+    categories.value = Object.keys(res || {}).map(name => ({
+      name,
+      color: getCategoryColor(name),
+      count: res[name] || 0,
+    })).sort((a, b) => b.count - a.count)
   } catch (error) {
     console.error('加载分类统计失败:', error)
   }

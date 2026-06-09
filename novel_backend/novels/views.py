@@ -90,7 +90,8 @@ class NovelViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def category_stats(self, request):
-        categories = ['玄幻', '都市', '穿越', '科幻', '游戏', '悬疑', '武侠', '历史']
+        # 动态查询所有小说中实际使用的分类，不再硬编码
+        categories = Novel.objects.values_list('category', flat=True).distinct().exclude(category='')
         stats = {}
         for cat in categories:
             stats[cat] = Novel.objects.filter(category=cat).count()

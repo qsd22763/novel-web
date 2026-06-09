@@ -3,9 +3,9 @@ import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
-  FolderOpened, Plus, Edit, Delete,
+  FolderOpened, Plus, Delete,
   Check, Close, Refresh, Setting,
-  CirclePlus, DocumentCopy
+  DocumentCopy
 } from '@element-plus/icons-vue'
 import { adminApi } from '../../api'
 
@@ -29,7 +29,6 @@ const treeRef = ref()
 
 const editForm = reactive({
   name: '',
-  parent_id: null as number | null,
   color: '#22C55E',
   description: '',
   sort_order: 0,
@@ -112,7 +111,6 @@ function handleNodeClick(data: CategoryNode) {
   selectedNodeKey.value = data.id
   Object.assign(editForm, {
     name: data.name,
-    parent_id: data.parent_id,
     color: data.color || '#22C55E',
     description: data.description || '',
     sort_order: data.sort_order,
@@ -120,12 +118,11 @@ function handleNodeClick(data: CategoryNode) {
   })
 }
 
-function openCreateDialog(parentId?: number) {
+function openCreateDialog() {
   editingId.value = null
-  dialogTitle.value = parentId ? '新建子分类' : '新建一级分类'
+  dialogTitle.value = '新建分类'
   Object.assign(editForm, {
     name: '',
-    parent_id: parentId || null,
     color: '#22C55E',
     description: '',
     sort_order: 0,
@@ -135,41 +132,36 @@ function openCreateDialog(parentId?: number) {
   nextTick(() => dialogFormRef.value?.clearValidate())
 }
 
-function openEditDialog(node: CategoryNode) {
-  editingId.value = node.id
-  dialogTitle.value = '编辑分类'
-  Object.assign(editForm, {
-    name: node.name,
-    parent_id: node.parent_id,
-    color: node.color || '#22C55E',
-    description: node.description || '',
-    sort_order: node.sort_order,
-    is_active: node.is_active,
+// 右侧面板直接保存（编辑已有分类）
+async function handleSaveInline() {
+  if (!selectedNode.value) return
+  if (!formRef.value) return
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+    try {
+      await adminApi.category.update(selectedNode.value!.id, { ...editForm })
+      ElMessage.success('保存成功')
+      fetchTree()
+    } catch (e) {
+      console.error('保存分类失败:', e)
+      ElMessage.error('保存失败')
+    }
   })
-  dialogVisible.value = true
-  nextTick(() => dialogFormRef.value?.clearValidate())
 }
 
-async function handleSubmit() {
+// 弹窗创建新分类
+async function handleCreate() {
   if (!dialogFormRef.value) return
   await dialogFormRef.value.validate(async (valid) => {
     if (!valid) return
     try {
-      if (editingId.value) {
-        await adminApi.category.update(editingId.value, { ...editForm })
-        ElMessage.success('更新成功')
-      } else {
-        await adminApi.category.create({ ...editForm })
-        ElMessage.success('创建成功')
-      }
+      await adminApi.category.create({ ...editForm })
+      ElMessage.success('创建成功')
       dialogVisible.value = false
       fetchTree()
-      if (selectedNode.value) {
-        handleNodeClick(findNodeById(treeData.value, selectedNode.value.id) || selectedNode.value)
-      }
     } catch (e) {
-      console.error('保存分类失败:', e)
-      ElMessage.error(editingId.value ? '更新失败' : '创建失败')
+      console.error('创建分类失败:', e)
+      ElMessage.error('创建失败')
     }
   })
 }
@@ -312,17 +304,6 @@ onUnmounted(() => {
               <el-input v-model="editForm.name" placeholder="请输入分类名称" maxlength="50" show-word-limit />
             </el-form-item>
 
-            <el-form-item label="父级分类">
-              <el-select v-model="editForm.parent_id" placeholder="无（顶级分类）" clearable class="full-width" popper-class="dark-select-dropdown">
-                <el-option
-                  v-for="n in treeData.filter(t => t.id !== selectedNode?.id)"
-                  :key="n.id"
-                  :label="n.name"
-                  :value="n.id"
-                />
-              </el-select>
-            </el-form-item>
-
             <el-row :gutter="16">
               <el-col :span="12">
                 <el-form-item label="颜色标识">
@@ -357,8 +338,8 @@ onUnmounted(() => {
           </el-form>
 
           <div class="panel-actions">
-            <el-button @click="openEditDialog(selectedNode!)" type="primary" :icon="Edit">
-              在弹窗中编辑
+            <el-button @click="handleSaveInline" type="primary" :icon="Check">
+              保存修改
             </el-button>
           </div>
         </div>
@@ -396,12 +377,6 @@ onUnmounted(() => {
         class="context-menu"
         :style="{ left: contextMenuEvent.x + 'px', top: contextMenuEvent.y + 'px' }"
       >
-        <div class="context-menu-item" @click="openCreateDialog(contextMenuNode!.id); closeContextMenu()">
-          <el-icon><CirclePlus /></el-icon> 新建子分类
-        </div>
-        <div class="context-menu-item" @click="openEditDialog(contextMenuNode!); closeContextMenu()">
-          <el-icon><Edit /></el-icon> 编辑
-        </div>
         <div class="context-menu-item" @click="handleToggle(contextMenuNode!); closeContextMenu()">
           <el-icon><Close /></el-icon> {{ contextMenuNode?.is_active ? '禁用' : '启用' }}
         </div>
@@ -428,17 +403,6 @@ onUnmounted(() => {
       >
         <el-form-item label="分类名称" :rules="[{ required: true, message: '请输入分类名称', trigger: 'blur' }]">
           <el-input v-model="editForm.name" placeholder="请输入分类名称" maxlength="50" show-word-limit />
-        </el-form-item>
-
-        <el-form-item label="父级分类">
-          <el-select v-model="editForm.parent_id" placeholder="无（顶级分类）" clearable class="full-width" popper-class="dark-select-dropdown">
-            <el-option
-              v-for="n in treeData.filter(t => t.id !== editingId)"
-              :key="n.id"
-              :label="n.name"
-              :value="n.id"
-            />
-          </el-select>
         </el-form-item>
 
         <el-row :gutter="16">
@@ -474,7 +438,7 @@ onUnmounted(() => {
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">{{ editingId ? '保存修改' : '创建分类' }}</el-button>
+        <el-button type="primary" @click="handleCreate">创建分类</el-button>
       </template>
     </el-dialog>
   </div>

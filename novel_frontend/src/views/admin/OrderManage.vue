@@ -22,7 +22,7 @@ const stats = ref({
 
 const queryParams = reactive({
   page: 1,
-  page_size: 15,
+  page_size: 50,
   status: '',
   plan_type: '',
   search: '',

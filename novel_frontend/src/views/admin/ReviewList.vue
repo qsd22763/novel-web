@@ -259,7 +259,7 @@ interface ReviewBook {
   _approving?: boolean; _rejecting?: boolean
 }
 
-const CATEGORIES = ['玄幻', '都市', '穿越', '科幻', '游戏', '悬疑', '武侠', '历史']
+const CATEGORIES = ref<string[]>([])
 
 const STATUS_MAP: Record<number, { label: string }> = {
   0: { label: '连载中' },
@@ -455,6 +455,11 @@ const getCategoryTagType = (cat: string): '' | 'success' | 'warning' | 'danger' 
 onMounted(() => {
   loadData()
   loadStats()
+  // 动态加载分类列表
+  adminApi.category.list({ page: 1, page_size: 100 }).then((res: any) => {
+    const list = res.results || res || []
+    CATEGORIES.value = list.map((c: any) => c.name).sort()
+  }).catch(() => {})
 })
 </script>
 

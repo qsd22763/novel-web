@@ -21,7 +21,7 @@ interface AdminNovel {
   created_at: string; updated_at: string
 }
 
-const CATEGORIES = ['玄幻', '都市', '穿越', '科幻', '游戏', '悬疑', '武侠', '历史']
+const CATEGORIES = ref<string[]>([])
 
 const CATEGORY_COLORS: Record<string, { bg: string; color: string; border: string }> = {
   '玄幻': { bg: 'rgba(168,85,247,0.15)', color: '#A855F7', border: 'rgba(168,85,247,0.3)' },
@@ -32,6 +32,13 @@ const CATEGORY_COLORS: Record<string, { bg: string; color: string; border: strin
   '悬疑': { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: 'rgba(245,158,11,0.3)' },
   '武侠': { bg: 'rgba(239,68,68,0.15)', color: '#EF4444', border: 'rgba(239,68,68,0.3)' },
   '历史': { bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6', border: 'rgba(139,92,246,0.3)' },
+  '文化': { bg: 'rgba(6,182,212,0.12)', color: '#22D3EE', border: 'rgba(6,182,212,0.25)' },
+}
+
+function getCategoryColor(name: string) {
+  if (CATEGORY_COLORS[name]) return CATEGORY_COLORS[name]
+  const palette = Object.values(CATEGORY_COLORS)
+  return palette[Math.abs(name.charCodeAt(0)) % palette.length] || palette[0]
 }
 
 const STATUS_MAP: Record<number, { type: '' | 'success' | 'info' | 'warning' | 'danger'; label: string }> = {
@@ -102,7 +109,7 @@ function formatCount(num: number): string {
 }
 
 function getCategoryStyle(category: string) {
-  return CATEGORY_COLORS[category] || { bg: 'rgba(148,163,184,0.15)', color: '#94A3B8', border: 'rgba(148,163,184,0.3)' }
+  return getCategoryColor(category)
 }
 
 function formatDate(dateStr: string): string {
@@ -361,6 +368,11 @@ function handleSortChange({ prop, order }: { prop: string; order: string | null 
 
 onMounted(() => {
   fetchData()
+  // 动态加载分类列表
+  adminApi.category.list({ page: 1, page_size: 100 }).then((res: any) => {
+    const list = res.results || res || []
+    CATEGORIES.value = list.map((c: any) => c.name).sort()
+  }).catch(() => {})
 })
 
 const hasActiveFilters = computed(() => {

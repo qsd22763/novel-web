@@ -43,21 +43,28 @@ TEMPLATES = []
 
 WSGI_APPLICATION = 'novel_project.wsgi.application'
 
-# === Database: PostgreSQL (Supabase) with connection pooling ===
+# === Database: MySQL (Aiven) with SSL required ===
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', 'postgres'),
-        'USER': env('DB_USER', 'postgres'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': env('DB_NAME', 'defaultdb'),
+        'USER': env('DB_USER', 'avnadmin'),
         'PASSWORD': env('DB_PASSWORD', ''),
         'HOST': env('DB_HOST', 'localhost'),
-        'PORT': env('DB_PORT', '5432'),
+        'PORT': env('DB_PORT', '3306'),
         # Persistent connections reduce cold-start DB handshake overhead
         'CONN_MAX_AGE': 600,
         'CONN_HEALTH_CHECKS': True,
         'OPTIONS': {
-            'connect_timeout': 5,
-            'options': '-c statement_timeout=8000',
+            'connect_timeout': 10,
+            'read_timeout': 10,
+            'write_timeout': 10,
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            # Aiven requires SSL
+            'ssl': {
+                'check_hostname': False,
+            },
         },
     }
 }

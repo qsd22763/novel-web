@@ -1,10 +1,12 @@
 """
 Vercel Serverless entry point for Django.
-Optimized for minimal cold-start time (< 10s).
+Optimized for minimal cold-start time.
+Uses ASGI handler compatible with @vercel/python@5.x
 """
 import os
 import sys
 import traceback
+import json
 
 # === Path setup ===
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -19,57 +21,94 @@ os.environ.setdefault('DJANGO_ALLOW_ASYNC_UNSAFE', 'true')
 _asgi_app = None
 _init_error = None
 
-def get_asgi():
-    """Get or create the ASGI application."""
+
+def _init_django():
+    """Initialize Django exactly once."""
     global _asgi_app, _init_error
-    if _init_error:
-        raise _init_error
-    if _asgi_app is None:
-        try:
-            import django
-            django.setup()
-            from django.core.asgi import get_asgi_application
-            _asgi_app = get_asgi_application()
-        except Exception as e:
-            _init_error = e
-            print(f"[Vercel] Django init FAILED:\n{traceback.format_exc()}")
-            raise
-    return _asgi_app
+    if _asgi_app is not None or _init_error is not None:
+        return
 
-
-async def handler(request):
-    """Vercel serverless function entry point."""
     try:
-        app = get_asgi()
-        return await app(request)
+        import django
+        django.setup()
+        from django.core.asgi import get_asgi_application
+        _asgi_app = get_asgi_application()
     except Exception as e:
-        # Return a JSON error response instead of crashing silently
-        error_msg = str(e)
-        stack = traceback.format_exc()
-        print(f"[Vercel] Request handler ERROR:\n{stack}")
+        _init_error = e
+        print(f"[Vercel] Django init FAILED:\n{traceback.format_exc()}", flush=True)
 
-        # Try to return a structured error response
-        try:
-            from django.http import JsonResponse
-            response = JsonResponse({
-                'error': 'Server Error',
+
+# Initialize Django at module load time (cold start)
+_init_django()
+
+
+async def application(scope, receive, send):
+    """ASGI3 application - entry point for Vercel Python runtime."""
+    # If Django failed to init, return error immediately
+    if _init_error:
+        error_msg = str(_init_error)
+        await send({
+            'type': 'http.response.start',
+            'status': 503,
+            'headers': [[b'content-type', b'application/json']],
+        })
+        await send({
+            'type': 'http.response.body',
+            'body': json.dumps({
+                'error': 'Django init failed',
                 'detail': error_msg[:500],
-                'type': type(e).__name__,
-            }, status=503)
-            # Convert Django response to ASGI response
-            return response
+            }).encode(),
+        })
+        return
+
+    # Delegate to Django's ASGI app
+    try:
+        await _asgi_app(scope, receive, send)
+    except Exception as e:
+        print(f"[Vercel] Request ERROR: {e}\n{traceback.format_exc()}", flush=True)
+        try:
+            await send({
+                'type': 'http.response.start',
+                'status': 500,
+                'headers': [[b'content-type', b'application/json']],
+            })
+            await send({
+                'type': 'http.response.body',
+                'body': json.dumps({
+                    'error': 'Request failed',
+                    'detail': str(e)[:300],
+                }).encode(),
+            })
         except Exception:
-            # Fallback if even Django's response creation fails
-            return {
-                'statusCode': 503,
-                'headers': {'Content-Type': 'application/json'},
-                'body': f'{{"error":"Django init failed","detail":"{error_msg[:200]}"}}',
-            }
+            pass  # Headers already sent
 
 
-# Compatibility exports
-app = handler
-try:
-    application = get_asgi()
-except Exception:
-    application = handler  # Fallback: use raw handler if Django won't start
+# For older Vercel runtimes that expect a handler(request) function
+def handler(request):
+    """Legacy synchronous handler fallback."""
+    import asyncio
+
+    async def asgi_wrapper(scope, receive, send):
+        await application(scope, receive, send)
+
+    # Convert request to ASGI scope and run
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(asgi_wrapper(
+            {
+                'type': 'http',
+                'method': request.get('method', 'GET'),
+                'path': request.get('path', '/'),
+                'query_string': request.get('query', '').encode(),
+                'headers': [
+                    [k.encode(), v.encode()] for k, v in request.get('headers', {}).items()
+                ],
+            },
+            lambda: None,
+            None,
+        ))
+    finally:
+        loop.close()
+
+
+app = application

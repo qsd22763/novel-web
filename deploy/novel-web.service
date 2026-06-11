@@ -7,7 +7,6 @@ Type=notify
 User=www-data
 Group=www-data
 WorkingDirectory=/www/novel_backend
-ExecStartPre=/bin/bash -c 'set -a; source /www/novel_backend/.env; set +a'
 ExecStart=/www/novel_backend/venv/bin/gunicorn novel_project.wsgi:application -c /www/novel/deploy/gunicorn_config.py
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s TERM $MAINPID
@@ -16,11 +15,7 @@ RestartSec=3
 StandardOutput=append:/var/log/novel/service.log
 StandardError=append:/var/log/novel/service_error.log
 
-# 加载 .env 环境变量文件
-EnvironmentFile=/www/novel_backend/.env
-
-# 使用 settings_vercel (精简版，适配云服务器)
-Environment="DJANGO_SETTINGS_MODULE=novel_project.settings_vercel"
+Environment="DJANGO_SETTINGS_MODULE=novel_project.settings"
 
 [Install]
 WantedBy=multi-user.target

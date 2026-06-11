@@ -53,19 +53,6 @@
 
     <main class="main-content">
 
-      <!-- ===== API 错误提示 ===== -->
-      <div v-if="apiError" class="api-error-banner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="error-icon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span class="error-text">{{ apiError }}</span>
-        <button class="error-retry" @click="retryAllData">重试</button>
-      </div>
-
-      <!-- ===== 全局加载状态 ===== -->
-      <div v-if="isLoading && !apiError" class="global-loading">
-        <div class="loading-spinner"></div>
-        <span>正在加载数据...</span>
-      </div>
-
       <!-- ===== HERO ===== -->
       <section class="hero-section">
         <div class="hero-bg"></div>
@@ -596,8 +583,6 @@ const searchInput = ref<HTMLInputElement>()
 const featuredNovels = ref<Novel[]>([])
 const recentNovels = ref<Novel[]>([])
 const isScrolled = ref(false)
-const isLoading = ref(true)
-const apiError = ref<string | null>(null)
 const allPopupAds = ref<any[]>([])
 const showPopupAd = ref(false)
 const popupVisible = ref(false)
@@ -693,10 +678,10 @@ const loadFeaturedNovels = async () => {
   try {
     const res = await novelApi.recommend(8)
     featuredNovels.value = res
+    // 数据就绪后立即生成书单（必须在赋值之后调用）
     initBookLists()
   } catch (error) {
     console.error('加载推荐小说失败:', error)
-    throw error
   }
 }
 
@@ -706,7 +691,6 @@ const loadRecentNovels = async () => {
     recentNovels.value = res.results || []
   } catch (error) {
     console.error('加载最新小说失败:', error)
-    throw error
   }
 }
 
@@ -960,42 +944,19 @@ const getBookTitle = (id: number) => {
   return novel?.title || ''
 }
 
-// ===== 统一加载所有数据（含错误处理）=====
-const retryAllData = async () => {
-  isLoading.value = true
-  apiError.value = null
-  let errorCount = 0
-
-  const loaders = [
-    { fn: loadFeaturedNovels, name: '推荐小说' },
-    { fn: loadRecentNovels, name: '最新小说' },
-    { fn: loadNewBooks, name: '新书上架' },
-    { fn: loadCategoryStats, name: '分类统计' },
-    { fn: initRankings, name: '热门榜单' },
-    { fn: fetchPublicAds, name: '广告' },
-    { fn: fetchPublicAnnouncements, name: '公告' },
-  ]
-
-  for (const loader of loaders) {
-    try {
-      await loader.fn()
-    } catch {
-      errorCount++
-    }
-  }
-
-  isLoading.value = false
-  if (errorCount === loaders.length) {
-    apiError.value = '后端服务连接失败，数据加载失败，请稍后重试'
-  }
-}
-
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
 }
 
 onMountedVue(() => {
-  retryAllData()
+  loadFeaturedNovels()   // 内部会调用 initBookLists()
+  loadRecentNovels()
+  loadNewBooks()
+  loadCategoryStats()
+  initRankings()
+  // initBookLists() 已移至 loadFeaturedNovels 内部，数据就绪后自动触发
+  fetchPublicAds()
+  fetchPublicAnnouncements()
   window.addEventListener('scroll', handleScroll)
   try {
     const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -1009,7 +970,13 @@ onUnmounted(() => {
 
 // keep-alive 激活时重新初始化（从其他页面返回首页时触发）
 onActivated(() => {
-  retryAllData()
+  loadFeaturedNovels()   // 内部会调用 initBookLists()
+  loadRecentNovels()
+  loadNewBooks()
+  loadCategoryStats()
+  initRankings()
+  fetchPublicAds()
+  fetchPublicAnnouncements()
   window.addEventListener('scroll', handleScroll)
 })
 </script>
@@ -1220,50 +1187,6 @@ onActivated(() => {
 .main-content {
   padding-top: 70px;
 }
-
-/* ===== API 错误提示横幅 ===== */
-.api-error-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
-  border-bottom: 1px solid #FECACA;
-  color: #DC2626;
-}
-.error-icon {
-  width: 20px; height: 20px; flex-shrink: 0;
-}
-.error-text {
-  flex: 1; font-size: 0.875rem; font-weight: 500;
-}
-.error-retry {
-  padding: 0.3rem 1rem;
-  background: #DC2626; color: #fff;
-  border: none; border-radius: 6px;
-  font-size: 0.8rem; font-weight: 500;
-  cursor: pointer; transition: opacity 0.2s;
-}
-.error-retry:hover { opacity: 0.85; }
-
-/* ===== 全局加载状态 ===== */
-.global-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 4rem 0;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-}
-.loading-spinner {
-  width: 28px; height: 28px;
-  border: 3px solid #E5E7EB;
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===== HERO ===== */
 .hero-section {

@@ -1,7 +1,0 @@
-# EdgeOne Pages Python 后端依赖
-Django==4.2.14
-djangorestframework==3.15.2
-django-cors-headers==4.4.0
-python-dotenv==1.0.1
-Pillow==10.4.0
-pymysql==1.1.1

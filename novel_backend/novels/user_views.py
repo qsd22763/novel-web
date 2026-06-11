@@ -30,7 +30,10 @@ class AuthViewSet(viewsets.ViewSet):
     def register(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            try:
+                user = serializer.save()
+            except Exception as e:
+                return Response({'detail': f'注册失败：{str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             login(request, user)
             return Response({
                 'message': '注册成功',

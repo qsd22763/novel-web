@@ -8,7 +8,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { initDatabase, getDb, now } = require('./db');
+const { initDatabase, getDb, now } = require('./db-memory');
 
 // ══════════════════════════════════════════════
 //  中间件（原 middleware/auth.js 内联）

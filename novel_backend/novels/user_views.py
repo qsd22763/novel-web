@@ -34,7 +34,8 @@ class AuthViewSet(viewsets.ViewSet):
                 user = serializer.save()
             except Exception as e:
                 return Response({'detail': f'注册失败：{str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            login(request, user)
+            from django.contrib.auth.backends import ModelBackend
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return Response({
                 'message': '注册成功',
                 'user': UserSerializer(user).data

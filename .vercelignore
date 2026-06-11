@@ -4,7 +4,6 @@ api/seed.js
 api/debug.js
 api/middleware/
 api/api.js
-data/
 novel_backend/
 deploy/
 docs/

@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "build:prod": "vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "preview": "vite preview",
+    "vercel:build": "vite build"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",

@@ -10,6 +10,7 @@ import {
   Star, Timer, ArrowDown, SetUp
 } from '@element-plus/icons-vue'
 import request from '../../utils/request'
+import { adminApi } from '../../api/index'
 
 interface AdminNovel {
   id: number; title: string; author: string; cover: string

@@ -948,9 +948,13 @@ let _initialized = false;
 
 async function ensureInit() {
   if (!_initialized) {
-    await initDatabase();
+    try {
+      await initDatabase();
+    } catch (e) {
+      console.error('数据库初始化失败:', e.message);
+      throw e;
+    }
     _app = createApp();
-    try { const { runSeed } = require('./seed'); await runSeed(); } catch (_) {}
     _initialized = true;
   }
   return _app;
